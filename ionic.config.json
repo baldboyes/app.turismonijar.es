@@ -1,0 +1,7 @@
+{
+  "name": "app-turismonijar-es",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue"
+}
