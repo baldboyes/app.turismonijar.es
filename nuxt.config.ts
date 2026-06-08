@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     '@nuxtjs/ionic',
     '@vite-pwa/nuxt',
   ],
+  css: ['~/assets/css/tailwind.css'],
   app: {
     head: {
       htmlAttrs: {
@@ -29,18 +30,19 @@ export default defineNuxtConfig({
      * Directory that the component lives in.
      * @default "@/components/ui"
      */
-    componentDir: 'components/ui',
+    componentDir: './app/components/ui',
   },
   vite: {
     plugins: [tailwindcss()],
   },
   i18n: {
     locales: [
-      { code: 'es', language: 'es-ES', dir: 'ltr' },
-      { code: 'en', language: 'en-US', dir: 'ltr' }
+      { code: 'es', language: 'es-ES', dir: 'ltr', file: 'es.json' },
+      { code: 'en', language: 'en-US', dir: 'ltr', file: 'en.json' }
     ],
     defaultLocale: 'es',
     strategy: 'prefix',
+    langDir: 'locales/'
   },
   pwa: {
     registerType: 'autoUpdate',
@@ -129,7 +131,7 @@ export default defineNuxtConfig({
       periodicSyncForUpdates: 3600
     },
     devOptions: {
-      enabled: true,
+      enabled: false,
       suppressWarnings: true,
       navigateFallback: '/',
       type: 'module'

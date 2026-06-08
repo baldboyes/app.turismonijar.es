@@ -1,0 +1,149 @@
+{
+  "home": "Home",
+  "page2": "Page 2",
+  "page1": "Page 1",
+  "title1": "Níjar Tourism",
+  "title2": "My Title 2",
+  "text_red": "Now you will see the header at the top and the menu at the bottom...",
+  "beaches_title": "Beach Flags",
+  "beach_flags": "Beach Flag Status",
+  "verde": "Swimming allowed",
+  "amarilla": "Caution",
+  "amarilla_por_medusa": "Jellyfish",
+  "roja": "No swimming",
+  "loading_flags": "Loading beach flag states...",
+  "service_active": "Active service",
+  "ajustes": "Settings",
+  "provisional": "Provisional",
+  "definitivo": "Definitive",
+  "last_update_label": "Last update:",
+  "seo": {
+    "app": {
+      "title": "Níjar Tourism",
+      "description": "Application for Níjar Tourism"
+    },
+    "index": {
+      "title": "Beach Flags",
+      "description": "Check the status of beach flags in Níjar in real time (swimming allowed, caution, jellyfish, swimming prohibited)."
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Settings and language of the Níjar Tourism application."
+    },
+    "page2": {
+      "title": "Page 2",
+      "description": "Additional information and details about tourism in Níjar."
+    },
+    "playas": {
+      "title": "Beaches of Níjar",
+      "description": "Explore the full list of beaches and coves in the Cabo de Gata-Níjar Natural Park."
+    },
+    "playa_detail": {
+      "title": "{name} - Beaches of Níjar",
+      "description": "Detailed information for {name} beach: directions, accessibility, characteristics, and services."
+    }
+  },
+  "error_overlay": {
+    "title": "Loading error",
+    "message": "Could not load beach status. Please try again.",
+    "retry": "Retry"
+  },
+  "drawer": {
+    "explore_fallback": "Explore Níjar"
+  },
+  "map": {
+    "flag_status": "{status} Flag"
+  },
+  "settings_panel": {
+    "language_title": "Language / Idioma",
+    "language_subtitle": "Select the application language",
+    "info_title": "App Information",
+    "info_subtitle": "Technical details of the Níjar Tourism application.",
+    "version": "Version",
+    "framework": "Framework",
+    "environment": "Environment"
+  },
+  "languages": {
+    "es": "Spanish",
+    "en": "English"
+  },
+  "weather": {
+    "sunny": "Sunny",
+    "clear": "Clear",
+    "mainly_sunny": "Mainly Sunny",
+    "mainly_clear": "Mainly Clear",
+    "partly_cloudy": "Partly Cloudy",
+    "cloudy": "Cloudy",
+    "foggy": "Foggy",
+    "rime_fog": "Rime Fog",
+    "light_drizzle": "Light Drizzle",
+    "drizzle": "Drizzle",
+    "heavy_drizzle": "Heavy Drizzle",
+    "light_freezing_drizzle": "Light Freezing Drizzle",
+    "freezing_drizzle": "Freezing Drizzle",
+    "light_rain": "Light Rain",
+    "rain": "Rain",
+    "heavy_rain": "Heavy Rain",
+    "light_freezing_rain": "Light Freezing Rain",
+    "freezing_rain": "Freezing Rain",
+    "light_snow": "Light Snow",
+    "snow": "Snow",
+    "heavy_snow": "Heavy Snow",
+    "snow_grains": "Snow Grains",
+    "light_showers": "Light Showers",
+    "showers": "Showers",
+    "heavy_showers": "Heavy Showers",
+    "light_snow_showers": "Light Snow Showers",
+    "snow_showers": "Snow Showers",
+    "thunderstorm": "Thunderstorm",
+    "light_thunderstorms_hail": "Light Thunderstorms with Hail",
+    "thunderstorm_hail": "Thunderstorm with Hail",
+    "details_title": "Weather in Níjar",
+    "hourly_forecast": "Hourly Forecast",
+    "wind": "Wind",
+    "humidity": "Humidity",
+    "uv_index": "UV Index",
+    "precipitation": "Precipitation",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset",
+    "elevation": "Elevation",
+    "wind_direction": "Wind Direction",
+    "close": "Close",
+    "timezone": "Timezone",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "uv_low": "Low",
+    "uv_moderate": "Moderate",
+    "uv_high": "High",
+    "uv_very_high": "Very High",
+    "uv_extreme": "Extreme",
+    "location": "Location",
+    "sunrise_sunset": "Sunrise & Sunset"
+  },
+  "components": {
+    "bottom_nav": {
+      "map": "Map",
+      "beaches": "Beaches"
+    }
+  },
+  "playas_page": {
+    "title": "Beaches of Níjar",
+    "search_placeholder": "Search beaches by name...",
+    "no_results": "No beaches found matching the applied filters.",
+    "loading": "Loading beach list...",
+    "back_to_list": "Back to Beaches",
+    "open_maps": "Directions",
+    "filter_all": "All",
+    "filter_monitored": "Monitored",
+    "filter_non_monitored": "Unmonitored",
+    "characteristics": "Characteristics",
+    "accessibility": "Accessibility",
+    "contact": "Contact",
+    "information": "Info Point",
+    "location": "Location",
+    "description": "Description",
+    "sand": "Sand",
+    "width": "Width",
+    "length": "Length"
+  }
+}

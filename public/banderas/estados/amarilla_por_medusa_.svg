@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="30px" height="30px" viewBox="0 0 30 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>amarilla_por_medusa_</title>
+    <g id="Página-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="amarilla_por_medusa_" transform="translate(1, 1)" fill-rule="nonzero">
+            <circle id="Óvalo" stroke="#FFFFFF" stroke-width="2" fill="#FFC107" cx="14" cy="14" r="14"></circle>
+            <g id="Grupo" transform="translate(7, 6)" opacity="0.9">
+                <path d="M7,12 C10.8659932,12 14,11.3834215 14,7.33333333 C14,3.28324517 10.8659932,0 7,0 C3.13400675,0 0,3.28324517 0,7.33333333 C0,11.3834215 3.13400675,12 7,12 Z" id="Óvalo" fill="#FFFFFF"></path>
+                <path d="M3.28569592,10 L2,17 M6.49993572,10 L6.49993572,17 M9.71430408,10 L11,17" id="Forma" stroke="#FFFFFF" stroke-width="0.5" fill="#000000"></path>
+            </g>
+        </g>
+    </g>
+</svg>

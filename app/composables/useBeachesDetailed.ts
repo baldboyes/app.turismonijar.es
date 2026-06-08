@@ -1,0 +1,109 @@
+import { ref, computed } from 'vue'
+import type { Beach } from '~/types/beach'
+
+const beachesDetailed = ref<Beach[]>([])
+const isLoading = ref<boolean>(false)
+const isError = ref<boolean>(false)
+const searchQuery = ref<string>('')
+const selectedFlagFilter = ref<string>('all')
+
+const flagMapping: Record<string, string> = {
+  'ply_la_isleta_del_moro': 'ply_penon_blanco',
+  'ply_los_escullos': 'ply_escullos',
+  'ply_media_luna': 'ply_cala_media_luna',
+  'ply_cala_del_plomo': 'ply_del_plomo',
+  'ply_cala_de_los_toros': 'ply_barranco_negro'
+}
+
+export function useBeachesDetailed() {
+  async function fetchDetailedBeaches(force = false) {
+    if (beachesDetailed.value.length > 0 && !force) return
+
+    isLoading.value = true
+    isError.value = false
+
+    try {
+      const [playasRes, flagsRes] = await Promise.all([
+        fetch('https://turismonijar.es/estado-de-las-banderas/?tipo=playas'),
+        fetch('https://turismonijar.es/estado-de-las-banderas/')
+      ]).catch(() => {
+        // Fallback in case parallel fetch fails
+        return [null, null]
+      })
+
+      if (!playasRes || !playasRes.ok) throw new Error('Failed to fetch beaches data')
+      const playasData = await playasRes.json()
+      
+      let liveFlagsMap: Record<string, string> = {}
+      if (flagsRes && flagsRes.ok) {
+        const flagsData = await flagsRes.json()
+        const flagsList = flagsData.states || []
+        flagsList.forEach((flagItem: any) => {
+          let mappedId = flagItem.id
+          if (flagMapping[flagItem.id]) {
+            mappedId = flagMapping[flagItem.id]
+          }
+          liveFlagsMap[mappedId] = flagItem.state
+        })
+      }
+
+      const rawBeaches = playasData.states || []
+      beachesDetailed.value = rawBeaches.map((beach: any) => {
+        // If there's a live flag state, merge it
+        let mergedBandera = beach.bandera || beach.state
+        if (liveFlagsMap[beach.id]) {
+          mergedBandera = liveFlagsMap[beach.id]
+        }
+        
+        return {
+          ...beach,
+          // Ensure coordinates are numbers
+          lat: Number(beach.lat),
+          lng: Number(beach.lng),
+          bandera: mergedBandera
+        }
+      })
+    } catch (err) {
+      console.error('Error fetching detailed beaches:', err)
+      isError.value = true
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  function normalizeText(text: string) {
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+  }
+
+  const filteredBeaches = computed(() => {
+    return beachesDetailed.value.filter(beach => {
+      // 1. Search filter (accent-insensitive)
+      const matchesSearch = normalizeText(beach.title).includes(normalizeText(searchQuery.value))
+      
+      // 2. Flag filter
+      let matchesFlag = true
+      if (selectedFlagFilter.value !== 'all') {
+        if (selectedFlagFilter.value === 'sin_bandera') {
+          matchesFlag = !beach.bandera
+        } else {
+          matchesFlag = beach.bandera?.toLowerCase() === selectedFlagFilter.value.toLowerCase()
+        }
+      }
+
+      return matchesSearch && matchesFlag
+    })
+  })
+
+  return {
+    beachesDetailed,
+    isLoading,
+    isError,
+    searchQuery,
+    selectedFlagFilter,
+    filteredBeaches,
+    fetchDetailedBeaches
+  }
+}

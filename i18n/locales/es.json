@@ -1,0 +1,149 @@
+{
+  "home": "Inicio",
+  "page2": "Página 2",
+  "page1": "Página 1",
+  "title1": "Turismo Níjar",
+  "title2": "Mi Título2",
+  "text_red": "Ahora sí verás el header arriba y el menú abajo...",
+  "beaches_title": "Banderas en Playas",
+  "beach_flags": "Estado de las Banderas",
+  "verde": "Baño permitido",
+  "amarilla": "Precaución",
+  "amarilla_por_medusa": "Medusas",
+  "roja": "Baño prohibido",
+  "loading_flags": "Cargando estado de las banderas...",
+  "service_active": "Servicio activo",
+  "ajustes": "Ajustes",
+  "provisional": "Provisional",
+  "definitivo": "Definitivo",
+  "last_update_label": "Última actualización:",
+  "seo": {
+    "app": {
+      "title": "Turismo Níjar",
+      "description": "Aplicación para el turismo de Níjar"
+    },
+    "index": {
+      "title": "Banderas de Playas",
+      "description": "Consulta el estado de las banderas de las playas de Níjar en tiempo real (baño permitido, precaución, medusas, baño prohibido)."
+    },
+    "settings": {
+      "title": "Ajustes",
+      "description": "Configuración e idioma de la aplicación de Turismo de Níjar."
+    },
+    "page2": {
+      "title": "Página 2",
+      "description": "Información y detalles adicionales sobre el turismo en Níjar."
+    },
+    "playas": {
+      "title": "Playas de Níjar",
+      "description": "Explora el listado completo de las playas y calas del Parque Natural Cabo de Gata-Níjar."
+    },
+    "playa_detail": {
+      "title": "{name} - Playas de Níjar",
+      "description": "Información detallada de la playa {name}: cómo llegar, accesibilidad, características y servicios."
+    }
+  },
+  "error_overlay": {
+    "title": "Error de carga",
+    "message": "No se pudo cargar el estado de las playas. Por favor, inténtalo de nuevo.",
+    "retry": "Reintentar"
+  },
+  "drawer": {
+    "explore_fallback": "Explorar Níjar"
+  },
+  "map": {
+    "flag_status": "Bandera {status}"
+  },
+  "settings_panel": {
+    "language_title": "Idioma / Language",
+    "language_subtitle": "Selecciona el idioma de la aplicación",
+    "info_title": "Información de la App",
+    "info_subtitle": "Detalles técnicos de la aplicación de Turismo Níjar.",
+    "version": "Versión",
+    "framework": "Framework",
+    "environment": "Entorno"
+  },
+  "languages": {
+    "es": "Español",
+    "en": "English"
+  },
+  "weather": {
+    "sunny": "Soleado",
+    "clear": "Despejado",
+    "mainly_sunny": "Mayormente Soleado",
+    "mainly_clear": "Mayormente Despejado",
+    "partly_cloudy": "Parcialmente Nublado",
+    "cloudy": "Nublado",
+    "foggy": "Neblina",
+    "rime_fog": "Niebla de Escarcha",
+    "light_drizzle": "Llovizna Ligera",
+    "drizzle": "Llovizna",
+    "heavy_drizzle": "Llovizna Intensa",
+    "light_freezing_drizzle": "Llovizna Helada Ligera",
+    "freezing_drizzle": "Llovizna Helada",
+    "light_rain": "Lluvia Ligera",
+    "rain": "Lluvia",
+    "heavy_rain": "Lluvia Fuerte",
+    "light_freezing_rain": "Lluvia Helada Ligera",
+    "freezing_rain": "Lluvia Helada",
+    "light_snow": "Nieve Ligera",
+    "snow": "Nieve",
+    "heavy_snow": "Nieve Fuerte",
+    "snow_grains": "Granos de Nieve",
+    "light_showers": "Chubascos Ligeros",
+    "showers": "Chubascos",
+    "heavy_showers": "Chubascos Fuertes",
+    "light_snow_showers": "Chubascos de Nieve Ligeros",
+    "snow_showers": "Chubascos de Nieve",
+    "thunderstorm": "Tormenta",
+    "light_thunderstorms_hail": "Tormentas Eléctricas Ligeras con Granizo",
+    "thunderstorm_hail": "Tormenta con Granizo",
+    "details_title": "El tiempo en Níjar",
+    "hourly_forecast": "Predicción por horas",
+    "wind": "Viento",
+    "humidity": "Humedad",
+    "uv_index": "Índice UV",
+    "precipitation": "Precipitación",
+    "sunrise": "Amanecer",
+    "sunset": "Atardecer",
+    "elevation": "Altitud",
+    "wind_direction": "Dirección",
+    "close": "Cerrar",
+    "timezone": "Zona horaria",
+    "latitude": "Latitud",
+    "longitude": "Longitud",
+    "uv_low": "Bajo",
+    "uv_moderate": "Moderado",
+    "uv_high": "Alto",
+    "uv_very_high": "Muy alto",
+    "uv_extreme": "Extremo",
+    "location": "Ubicación",
+    "sunrise_sunset": "Amanecer y Atardecer"
+  },
+  "components": {
+    "bottom_nav": {
+      "map": "Mapa",
+      "beaches": "Playas"
+    }
+  },
+  "playas_page": {
+    "title": "Playas de Níjar",
+    "search_placeholder": "Buscar playas por nombre...",
+    "no_results": "No se encontraron playas con los filtros aplicados.",
+    "loading": "Cargando listado de playas...",
+    "back_to_list": "Volver a Playas",
+    "open_maps": "Cómo llegar",
+    "filter_all": "Todas",
+    "filter_monitored": "Vigiladas",
+    "filter_non_monitored": "Sin bandera",
+    "characteristics": "Características",
+    "accessibility": "Accesibilidad",
+    "contact": "Contacto",
+    "information": "Punto de Información",
+    "location": "Ubicación",
+    "description": "Descripción",
+    "sand": "Arena",
+    "width": "Anchura",
+    "length": "Longitud"
+  }
+}
