@@ -1,10 +1,6 @@
 {
   "home": "Inicio",
-  "page2": "Página 2",
-  "page1": "Página 1",
   "title1": "Turismo Níjar",
-  "title2": "Mi Título2",
-  "text_red": "Ahora sí verás el header arriba y el menú abajo...",
   "beaches_title": "Banderas en Playas",
   "beach_flags": "Estado de las Banderas",
   "verde": "Baño permitido",
@@ -30,10 +26,6 @@
       "title": "Ajustes",
       "description": "Configuración e idioma de la aplicación de Turismo de Níjar."
     },
-    "page2": {
-      "title": "Página 2",
-      "description": "Información y detalles adicionales sobre el turismo en Níjar."
-    },
     "playas": {
       "title": "Playas de Níjar",
       "description": "Explora el listado completo de las playas y calas del Parque Natural Cabo de Gata-Níjar."
@@ -41,6 +33,14 @@
     "playa_detail": {
       "title": "{name} - Playas de Níjar",
       "description": "Información detallada de la playa {name}: cómo llegar, accesibilidad, características y servicios."
+    },
+    "noticias": {
+      "title": "Noticias de Níjar",
+      "description": "Mantente al día con las últimas noticias y eventos turísticos en el municipio de Níjar."
+    },
+    "noticia_detail": {
+      "title": "{title} - Noticias de Níjar",
+      "description": "{description}"
     }
   },
   "error_overlay": {
@@ -123,7 +123,14 @@
   "components": {
     "bottom_nav": {
       "map": "Mapa",
-      "beaches": "Playas"
+      "beaches": "Playas",
+      "news": "Noticias"
+    },
+    "lightbox": {
+      "close": "Cerrar",
+      "prev": "Anterior",
+      "next": "Siguiente",
+      "image_counter": "Imagen {current} de {total}"
     }
   },
   "playas_page": {
@@ -145,5 +152,19 @@
     "sand": "Arena",
     "width": "Anchura",
     "length": "Longitud"
+  },
+  "noticias_page": {
+    "title": "Noticias de Níjar",
+    "search_placeholder": "Buscar noticias...",
+    "no_results": "No se encontraron noticias con los filtros aplicados.",
+    "loading": "Cargando noticias...",
+    "back_to_list": "Volver a Noticias",
+    "published_at": "Publicado el {date}",
+    "read_more": "Leer más",
+    "audio_clips": "Notas de audio",
+    "gallery": "Galería de imágenes",
+    "page_info": "Página {current} de {total}",
+    "prev": "Anterior",
+    "next": "Siguiente"
   }
 }

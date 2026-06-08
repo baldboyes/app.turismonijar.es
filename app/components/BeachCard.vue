@@ -1,5 +1,5 @@
 <template>
-  <button
+  <div
     @click="$emit('click')"
     class="w-full text-left bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-300 flex flex-col group select-none"
   >
@@ -53,7 +53,7 @@
         </div>
       </div>
     </div>
-  </button>
+  </div>
 </template>
 
 <script setup lang="ts">

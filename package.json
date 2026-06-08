@@ -27,6 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "mapbox-gl": "^3.24.0",
+    "marked": "^18.0.5",
     "nuxt": "^4.4.7",
     "pinia": "^3.0.4",
     "reka-ui": "^2.9.9",

@@ -33,7 +33,7 @@
             </button>
           </div>
 
-          <!-- Flag Filters -->
+          <!-- Flag Filters
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-none">
             <button
               v-for="filter in filters"
@@ -47,6 +47,7 @@
               {{ filter.label }}
             </button>
           </div>
+          -->
         </div>
 
         <!-- Skeleton Loading State -->

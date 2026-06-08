@@ -2,10 +2,10 @@
   <div 
     :style="drawerStyle"
     :class="[
-      'fixed left-0 right-0 mx-auto bg-white flex flex-col',
+      'fixed left-0 right-0 mx-auto bg-white flex flex-col drawer-container',
       !isDragging ? 'transition-[max-width,border-radius] duration-350 ease-out' : '',
       state === 'full' 
-        ? 'max-w-none rounded-t-none border-t-0 shadow-none' 
+        ? 'max-w-none rounded-t-2xl md:rounded-t-none border-t border-gray-100 md:border-t-0 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] md:shadow-none' 
         : 'max-w-[1024px] rounded-t-2xl border-t border-gray-100 shadow-[0_-8px_30px_rgb(0,0,0,0.12)]'
     ]"
   >
@@ -26,10 +26,7 @@
       @touchmove="onTouchMove"
       @touchend="onTouchEnd"
       @mousedown="onMouseDown"
-      :class="[
-        'px-4 pb-3 border-b border-gray-100 flex items-center justify-between relative select-none shrink-0 transition-[padding-top] duration-300',
-        translateY === 0 ? 'custom-header' : ''
-      ]"
+      class="px-4 pb-3 border-b border-gray-100 flex items-center justify-between relative select-none shrink-0"
     >
       <!-- Botón para colapsar (solo visible en full o mid) -->
       <Button 
@@ -110,24 +107,65 @@ const formattedDate = computed(() => {
 const state = ref<'peek' | 'mid' | 'full'>('peek')
 const isDragging = ref(false)
 const windowHeight = ref(800)
+const safeAreaTop = ref(0)
+const safeAreaBottom = ref(0)
 const translateY = ref(550) // Valor por defecto antes de montar
 
-const maxTranslate = computed(() => windowHeight.value - 140)
+function getSafeAreaInsets() {
+  if (!import.meta.client) return { top: 0, bottom: 0 }
+  
+  const div = document.createElement('div')
+  div.style.position = 'fixed'
+  div.style.top = '0'
+  div.style.left = '0'
+  div.style.height = '0'
+  div.style.width = '0'
+  div.style.visibility = 'hidden'
+  div.style.marginTop = 'env(safe-area-inset-top, 0px)'
+  div.style.marginBottom = 'env(safe-area-inset-bottom, 0px)'
+  
+  document.body.appendChild(div)
+  const styles = window.getComputedStyle(div)
+  const top = parseFloat(styles.marginTop) || 0
+  const bottom = parseFloat(styles.marginBottom) || 0
+  document.body.removeChild(div)
+  
+  return { top, bottom }
+}
+
+function updateSafeArea() {
+  const insets = getSafeAreaInsets()
+  safeAreaTop.value = insets.top
+  // Fallback to 24px for top safe area on mobile if it returns 0 (Android status bar)
+  if (safeAreaTop.value === 0 && window.innerWidth <= 768) {
+    safeAreaTop.value = 24
+  }
+  safeAreaBottom.value = insets.bottom
+}
+
+const maxTranslate = computed(() => {
+  const bottomNavHeight = 64 + safeAreaBottom.value
+  const drawerHeaderHeight = 90
+  const visibleHeight = bottomNavHeight + drawerHeaderHeight
+  return windowHeight.value - visibleHeight - safeAreaTop.value
+})
+
+const headerFooterOffset = computed(() => 64 + safeAreaBottom.value + 80)
 
 // Calcula la altura máxima del scroll en tiempo real
 const scrollMaxHeight = computed(() => {
-  const headerFooterOffset = 130 // Espacio aproximado para el tirador, la cabecera y el BottomNav
+  const offset = headerFooterOffset.value
   
   if (isDragging.value) {
-    const visibleHeight = windowHeight.value - translateY.value
-    return `${Math.max(120, visibleHeight - headerFooterOffset)}px`
+    const visibleHeight = windowHeight.value - translateY.value - safeAreaTop.value
+    return `${Math.max(120, visibleHeight - offset)}px`
   }
   
   if (state.value === 'peek') {
     return '120px'
   } else if (state.value === 'mid') {
-    const visibleHeight = windowHeight.value / 2
-    return `${Math.max(120, visibleHeight - headerFooterOffset)}px`
+    const visibleHeight = windowHeight.value / 2 - safeAreaTop.value
+    return `${Math.max(120, visibleHeight - offset)}px`
   } else {
     return 'none'
   }
@@ -138,7 +176,7 @@ const drawerStyle = computed(() => {
     height: '100dvh',
     zIndex: state.value === 'full' ? 45 : 40,
     bottom: 0,
-    transform: `translateY(${translateY.value}px)`,
+    transform: `translateY(calc(${translateY.value}px + var(--safe-area-top, 0px)))`,
     // Sin retraso en la transición durante el arrastre
     transition: isDragging.value 
       ? 'none' 
@@ -149,6 +187,7 @@ const drawerStyle = computed(() => {
 onMounted(() => {
   if (import.meta.client) {
     windowHeight.value = window.innerHeight
+    updateSafeArea()
     translateY.value = maxTranslate.value
     
     window.addEventListener('resize', onResize)
@@ -165,6 +204,7 @@ onUnmounted(() => {
 
 function onResize() {
   windowHeight.value = window.innerHeight
+  updateSafeArea()
   if (state.value === 'peek') {
     translateY.value = maxTranslate.value
   } else if (state.value === 'mid') {
@@ -338,3 +378,15 @@ defineExpose({
   setState
 })
 </script>
+
+<style scoped>
+.drawer-container {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+}
+
+@media (max-width: 768px) {
+  .drawer-container {
+    --safe-area-top: env(safe-area-inset-top, 24px);
+  }
+}
+</style>

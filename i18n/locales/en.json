@@ -1,10 +1,6 @@
 {
   "home": "Home",
-  "page2": "Page 2",
-  "page1": "Page 1",
   "title1": "Níjar Tourism",
-  "title2": "My Title 2",
-  "text_red": "Now you will see the header at the top and the menu at the bottom...",
   "beaches_title": "Beach Flags",
   "beach_flags": "Beach Flag Status",
   "verde": "Swimming allowed",
@@ -30,10 +26,6 @@
       "title": "Settings",
       "description": "Settings and language of the Níjar Tourism application."
     },
-    "page2": {
-      "title": "Page 2",
-      "description": "Additional information and details about tourism in Níjar."
-    },
     "playas": {
       "title": "Beaches of Níjar",
       "description": "Explore the full list of beaches and coves in the Cabo de Gata-Níjar Natural Park."
@@ -41,6 +33,14 @@
     "playa_detail": {
       "title": "{name} - Beaches of Níjar",
       "description": "Detailed information for {name} beach: directions, accessibility, characteristics, and services."
+    },
+    "noticias": {
+      "title": "News of Níjar",
+      "description": "Stay up to date with the latest tourist news and events in the municipality of Níjar."
+    },
+    "noticia_detail": {
+      "title": "{title} - News of Níjar",
+      "description": "{description}"
     }
   },
   "error_overlay": {
@@ -123,7 +123,14 @@
   "components": {
     "bottom_nav": {
       "map": "Map",
-      "beaches": "Beaches"
+      "beaches": "Beaches",
+      "news": "News"
+    },
+    "lightbox": {
+      "close": "Close",
+      "prev": "Previous",
+      "next": "Next",
+      "image_counter": "Image {current} of {total}"
     }
   },
   "playas_page": {
@@ -145,5 +152,19 @@
     "sand": "Sand",
     "width": "Width",
     "length": "Length"
+  },
+  "noticias_page": {
+    "title": "News of Níjar",
+    "search_placeholder": "Search news...",
+    "no_results": "No news found matching the applied filters.",
+    "loading": "Loading news...",
+    "back_to_list": "Back to News",
+    "published_at": "Published on {date}",
+    "read_more": "Read more",
+    "audio_clips": "Audio notes",
+    "gallery": "Image gallery",
+    "page_info": "Page {current} of {total}",
+    "prev": "Previous",
+    "next": "Next"
   }
 }

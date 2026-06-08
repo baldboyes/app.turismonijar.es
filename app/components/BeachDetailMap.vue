@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-[220px] rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative">
+  <div class="w-full h-56 rounded-3xl overflow-hidden relative">
     <div ref="mapContainer" class="w-full h-full"></div>
   </div>
 </template>

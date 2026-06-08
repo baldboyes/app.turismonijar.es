@@ -20,13 +20,16 @@
         <span class="text-[10px] tracking-wide">{{ $t('components.bottom_nav.beaches') }}</span>
       </NuxtLink>
       
+
+
+      <!-- Noticias Link -->
       <NuxtLink 
-        :to="localePath('/pagina2')" 
+        :to="localePath('/noticias')" 
         class="flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-emerald-600 transition-colors"
         active-class="text-emerald-600 font-semibold"
       >
-        <FileText class="w-6 h-6 mb-0.5" />
-        <span class="text-[10px] tracking-wide">{{ $t('page2') }}</span>
+        <Newspaper class="w-6 h-6 mb-0.5" />
+        <span class="text-[10px] tracking-wide">{{ $t('components.bottom_nav.news') }}</span>
       </NuxtLink>
 
       <!-- Ajustes Link -->
@@ -43,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-  import { Map, Settings, FileText, Waves } from '@lucide/vue'
+  import { Map, Settings, Waves, Newspaper } from '@lucide/vue'
   const localePath = useLocalePath()
 </script>
 

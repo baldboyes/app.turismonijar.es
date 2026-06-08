@@ -97,7 +97,7 @@
 
   function handleMarkerClick(beach: Beach) {
     selectedBeachId.value = beach.id
-    if (drawerRef.value) {
+    if (drawerRef.value && drawerState.value === 'full') {
       drawerRef.value.setState('peek')
     }
   }
@@ -107,7 +107,7 @@
     if (mapRef.value) {
       mapRef.value.focusOnBeach(beach)
     }
-    if (drawerRef.value) {
+    if (drawerRef.value && drawerState.value === 'full') {
       drawerRef.value.setState('peek')
     }
   }
