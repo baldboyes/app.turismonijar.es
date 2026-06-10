@@ -20,6 +20,16 @@ const props = defineProps<{
 const mapContainer = ref<HTMLElement | null>(null)
 let map: mapboxgl.Map | null = null
 let marker: mapboxgl.Marker | null = null
+const timeoutIds = new Set<any>()
+
+function safeSetTimeout(fn: () => void, delay: number) {
+  const id = setTimeout(() => {
+    timeoutIds.delete(id)
+    fn()
+  }, delay)
+  timeoutIds.add(id)
+  return id
+}
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmFsZGJveSIsImEiOiJhMzBzeklzIn0.buJ1PP9-a9JkqNWGHW-H0g'
 
@@ -130,10 +140,10 @@ function initMap() {
 
     // Trigger map resize immediately and after animations/transitions
     map.resize()
-    setTimeout(() => {
+    safeSetTimeout(() => {
       map?.resize()
     }, 100)
-    setTimeout(() => {
+    safeSetTimeout(() => {
       map?.resize()
     }, 500)
   })
@@ -151,12 +161,18 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // Clear all pending timeouts to prevent memory leaks or errors
+  timeoutIds.forEach(id => clearTimeout(id))
+  timeoutIds.clear()
+
   window.removeEventListener('resize', onResize)
   if (marker) {
     marker.remove()
+    marker = null
   }
   if (map) {
     map.remove()
+    map = null
   }
 })
 

@@ -32,6 +32,16 @@ const mapContainer = ref<HTMLElement | null>(null)
 let map: mapboxgl.Map | null = null
 const markers = new Map<number | string, mapboxgl.Marker>()
 let animationFrameId: number | null = null
+const timeoutIds = new Set<any>()
+
+function safeSetTimeout(fn: () => void, delay: number) {
+  const id = setTimeout(() => {
+    timeoutIds.delete(id)
+    fn()
+  }, delay)
+  timeoutIds.add(id)
+  return id
+}
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmFsZGJveSIsImEiOiJhMzBzeklzIn0.buJ1PP9-a9JkqNWGHW-H0g'
 
@@ -333,13 +343,14 @@ onMounted(() => {
 
 
     map.on('load', () => {
+      if (!map) return
       updateMarkers()
       // Force Mapbox resize immediately and after page transition (400ms)
-      map?.resize()
-      setTimeout(() => {
+      map.resize()
+      safeSetTimeout(() => {
         map?.resize()
       }, 100)
-      setTimeout(() => {
+      safeSetTimeout(() => {
         map?.resize()
         fitBounds()
       }, 500)
@@ -351,6 +362,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // Clear all pending timeouts to prevent memory leaks or errors
+  timeoutIds.forEach(id => clearTimeout(id))
+  timeoutIds.clear()
+
   window.removeEventListener('resize', onResize)
   if (mapContainer.value) {
     mapContainer.value.removeEventListener('click', handlePopupLinkClick)
@@ -358,8 +373,14 @@ onUnmounted(() => {
   if (animationFrameId !== null) {
     cancelAnimationFrame(animationFrameId)
   }
+
+  // Explicitly remove all markers to break references and event listeners
+  markers.forEach(marker => marker.remove())
+  markers.clear()
+
   if (map) {
     map.remove()
+    map = null
   }
 })
 
@@ -376,7 +397,7 @@ function handlePopupLinkClick(e: MouseEvent) {
 
 function onResize() {
   if (map) {
-    setTimeout(() => {
+    safeSetTimeout(() => {
       map?.resize()
     }, 100)
   }
