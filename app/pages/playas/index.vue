@@ -97,21 +97,16 @@
       </div>
     </ion-content>
 
-    <!-- Footer -->
-    <ion-footer>
-      <BottomNav class="fixed bottom-0 left-0 right-0 w-full" style="z-index: 50;" />
-    </ion-footer>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import { onMounted, computed } from 'vue'
-import { IonPage, IonContent, IonFooter } from '@ionic/vue'
+import { IonPage, IonContent } from '@ionic/vue'
 import { Waves, Search, X, AlertCircle } from '@lucide/vue'
 import { useLocalePath, useSeoMeta, useI18n, useRouter } from '#imports'
 import { useBeachesDetailed } from '~/composables/useBeachesDetailed'
 import BeachCard from '~/components/BeachCard.vue'
-import BottomNav from '~/components/BottomNav.vue'
 
 const router = useRouter()
 const localePath = useLocalePath()

@@ -35,15 +35,30 @@ export function useBeachesDetailed() {
       const playasData = await playasRes.json()
       
       let liveFlagsMap: Record<string, string> = {}
+      let liveOcupacionMap: Record<string, string> = {}
       if (flagsRes && flagsRes.ok) {
         const flagsData = await flagsRes.json()
         const flagsList = flagsData.states || []
+        const ocupacionList = flagsData.ocupacion || []
+        
+        const OCUPACION_MAP: Record<string, string> = {
+          'ply_la_isleta_del_moro': 'ocupacion_la_isleta',
+          'ply_cala_del_plomo': 'ocupacion_el_plomo',
+          'ply_los_genoveses': 'ocupacion_genoveses',
+        }
+
         flagsList.forEach((flagItem: any) => {
           let mappedId = flagItem.id
           if (flagMapping[flagItem.id]) {
             mappedId = flagMapping[flagItem.id]
           }
           liveFlagsMap[mappedId] = flagItem.state
+
+          const targetOcupacionId = OCUPACION_MAP[flagItem.id] || String(flagItem.id).replace('ply_', 'ocupacion_')
+          const oItem = ocupacionList.find((o: any) => o.id === targetOcupacionId)
+          if (oItem) {
+            liveOcupacionMap[mappedId] = oItem.state
+          }
         })
       }
 
@@ -60,7 +75,8 @@ export function useBeachesDetailed() {
           // Ensure coordinates are numbers
           lat: Number(beach.lat),
           lng: Number(beach.lng),
-          bandera: mergedBandera
+          bandera: mergedBandera,
+          ocupacion: liveOcupacionMap[beach.id] ? { state: liveOcupacionMap[beach.id] } : undefined
         }
       })
     } catch (err) {

@@ -132,11 +132,6 @@
       </div>
     </ion-content>
 
-    <!-- Footer -->
-    <ion-footer>
-      <BottomNav class="fixed bottom-0 left-0 right-0 w-full" style="z-index: 50;" />
-    </ion-footer>
-
     <!-- Image Lightbox Overlay -->
     <Teleport to="body">
       <ImageLightbox
@@ -151,11 +146,10 @@
 
 <script setup lang="ts">
 import { onMounted, computed, ref } from 'vue'
-import { IonPage, IonContent, IonFooter } from '@ionic/vue'
+import { IonPage, IonContent } from '@ionic/vue'
 import { ChevronLeft, Newspaper, AlertCircle, Volume2, Image as ImageIcon } from '@lucide/vue'
 import { useRoute, useRouter, useLocalePath, useSeoMeta, useI18n } from '#imports'
 import { useArticles } from '~/composables/useArticles'
-import BottomNav from '~/components/BottomNav.vue'
 import ImageLightbox from '~/components/ImageLightbox.vue'
 import { marked } from 'marked'
 

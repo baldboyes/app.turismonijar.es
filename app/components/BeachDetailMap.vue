@@ -14,6 +14,7 @@ const props = defineProps<{
   lng: number
   title: string
   bandera?: string
+  ocupacionState?: string
 }>()
 
 const mapContainer = ref<HTMLElement | null>(null)
@@ -33,7 +34,7 @@ function getColorByState(state?: string) {
   }
 }
 
-function createFlagMarker(state?: string) {
+function createFlagMarker(state?: string, isFull?: boolean) {
   const el = document.createElement('div')
   if (!state) {
     // Return standard colored circle marker for beaches without a monitored flag
@@ -44,6 +45,9 @@ function createFlagMarker(state?: string) {
       </svg>
     `
     el.style.cursor = 'pointer'
+    if (isFull) {
+      appendRedDot(el)
+    }
     return el
   }
 
@@ -71,6 +75,9 @@ function createFlagMarker(state?: string) {
         </svg>
       `
       el.style.cursor = 'pointer'
+      if (isFull) {
+        appendRedDot(el)
+      }
       return el
   }
 
@@ -81,7 +88,17 @@ function createFlagMarker(state?: string) {
   el.style.backgroundRepeat = 'no-repeat'
   el.style.cursor = 'pointer'
 
+  if (isFull) {
+    appendRedDot(el)
+  }
+
   return el
+}
+
+function appendRedDot(parent: HTMLElement) {
+  const dot = document.createElement('div')
+  dot.className = 'parking-full-dot'
+  parent.appendChild(dot)
 }
 
 function initMap() {
@@ -104,7 +121,8 @@ function initMap() {
     if (!map) return
 
     // Create custom marker
-    const markerElement = createFlagMarker(props.bandera)
+    const isFull = props.ocupacionState === 'red'
+    const markerElement = createFlagMarker(props.bandera, isFull)
     
     marker = new mapboxgl.Marker(markerElement)
       .setLngLat([props.lng, props.lat])
@@ -143,17 +161,63 @@ onUnmounted(() => {
 })
 
 // Watch for coordinate changes and fly to new location
-watch(() => [props.lat, props.lng], ([newLat, newLng]) => {
+watch(() => [props.lat, props.lng], () => {
   if (map) {
     map.flyTo({
-      center: [newLng, newLat],
+      center: [props.lng, props.lat],
       zoom: 14,
       duration: 1000
     })
     
     if (marker) {
-      marker.setLngLat([newLng, newLat])
+      marker.setLngLat([props.lng, props.lat])
     }
   }
 })
+
+// Watch for flag status or parking occupancy changes to update marker
+watch(() => [props.bandera, props.ocupacionState], () => {
+  if (map) {
+    if (marker) {
+      marker.remove()
+    }
+    const isFull = props.ocupacionState === 'red'
+    const markerElement = createFlagMarker(props.bandera, isFull)
+    marker = new mapboxgl.Marker(markerElement)
+      .setLngLat([props.lng, props.lat])
+      .addTo(map)
+  }
+})
 </script>
+
+<style scoped>
+/* Parking full pulsing dot style */
+:deep(.parking-full-dot) {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 15px;
+  height: 15px;
+  background-color: #ef4444;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  animation: pulse-dot 1.8s infinite ease-in-out;
+  z-index: 10;
+}
+
+@keyframes pulse-dot {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+</style>

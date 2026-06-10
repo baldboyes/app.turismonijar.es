@@ -17,14 +17,51 @@ export function useBeaches() {
     isLoading.value = true
     isError.value = false
     try {
-      const response = await fetch('https://turismonijar.es/estado-de-las-banderas/')
-      if (!response.ok) throw new Error('API request failed')
-      const data = await response.json()
+      const [flagsRes, playasRes] = await Promise.all([
+        fetch('https://turismonijar.es/estado-de-las-banderas/'),
+        fetch('https://turismonijar.es/estado-de-las-banderas/?tipo=playas')
+      ])
       
-      beaches.value = data.states || []
-      fechasServicio.value = data.fechas_del_servicio_de_banderas || ''
-      lastModified.value = data.last_modified || ''
-      isProvisional.value = data.provisionales === 'si'
+      if (!flagsRes.ok || !playasRes.ok) throw new Error('API request failed')
+      
+      const flagsData = await flagsRes.json()
+      const playasData = await playasRes.json()
+
+      const flagStates = flagsData.states || []
+      const ocupacion = flagsData.ocupacion || []
+      const detailedBeaches = playasData.states || []
+
+      const OCUPACION_MAP: Record<string, string> = {
+        'ply_la_isleta_del_moro': 'ocupacion_la_isleta',
+        'ply_cala_del_plomo': 'ocupacion_el_plomo',
+        'ply_los_genoveses': 'ocupacion_genoveses',
+      }
+
+      const flagMapping: Record<string, string> = {
+        'ply_la_isleta_del_moro': 'ply_penon_blanco',
+        'ply_los_escullos': 'ply_escullos',
+        'ply_media_luna': 'ply_cala_media_luna',
+        'ply_cala_del_plomo': 'ply_del_plomo',
+        'ply_cala_de_los_toros': 'ply_barranco_negro'
+      }
+
+      beaches.value = flagStates.map((flagItem: any) => {
+        const detailedId = flagMapping[flagItem.id] || flagItem.id
+        const detailedBeach = detailedBeaches.find((b: any) => b.id === detailedId)
+        
+        const targetOcupacionId = OCUPACION_MAP[flagItem.id] || String(flagItem.id).replace('ply_', 'ocupacion_')
+        const oItem = ocupacion.find((o: any) => o.id === targetOcupacionId)
+
+        return {
+          ...flagItem,
+          id: detailedId,
+          description: detailedBeach?.description || '',
+          ocupacion: oItem ? { state: oItem.state } : undefined
+        }
+      })
+      fechasServicio.value = flagsData.fechas_del_servicio_de_banderas || ''
+      lastModified.value = flagsData.last_modified || ''
+      isProvisional.value = flagsData.provisionales === 'si'
     } catch (error) {
       console.error('Error fetching beach flags data:', error)
       isError.value = true

@@ -26,6 +26,15 @@
         <span class="size-2 rounded-full shrink-0" :class="getDotColorClass(beach.bandera)"></span>
         {{ $t(beach.bandera.toLowerCase()) }}
       </div>
+
+      <!-- Parking Badge Overlay -->
+      <div 
+        v-if="beach.ocupacion?.state === 'red'" 
+        class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase shadow-md flex items-center gap-1 bg-red-600/95 text-white backdrop-blur-sm"
+      >
+        <AlertTriangle class="w-3 h-3" />
+        <span>{{ $t('playas_page.parking_full') }}</span>
+      </div>
     </div>
 
     <!-- Card Content -->
@@ -58,7 +67,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Waves } from '@lucide/vue'
+import { Waves, AlertTriangle } from '@lucide/vue'
 import type { Beach } from '~/types/beach'
 
 const props = defineProps<{

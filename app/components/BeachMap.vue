@@ -8,11 +8,13 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { useI18n } from '#imports'
+import { useI18n, useLocalePath, useRouter } from '#imports'
 
 import type { Beach } from '~/types/beach'
 
 const { t } = useI18n()
+const localePath = useLocalePath()
+const router = useRouter()
 
 const props = withDefaults(defineProps<{
   beaches: Beach[]
@@ -45,7 +47,7 @@ function getColorByState(state: string) {
 }
 
 // Helper to create custom HTML element for marker
-function createFlagMarker(state: string) {
+function createFlagMarker(state: string, isFull?: boolean) {
   const el = document.createElement('div')
   const stateLower = state.toLowerCase()
   let svgPath = ''
@@ -72,6 +74,9 @@ function createFlagMarker(state: string) {
         </svg>
       `
       el.style.cursor = 'pointer'
+      if (isFull) {
+        appendRedDot(el)
+      }
       return el
   }
 
@@ -82,7 +87,17 @@ function createFlagMarker(state: string) {
   el.style.backgroundRepeat = 'no-repeat'
   el.style.cursor = 'pointer'
 
+  if (isFull) {
+    appendRedDot(el)
+  }
+
   return el
+}
+
+function appendRedDot(parent: HTMLElement) {
+  const dot = document.createElement('div')
+  dot.className = 'parking-full-dot'
+  parent.appendChild(dot)
 }
 
 // Update or initialize markers
@@ -95,7 +110,8 @@ function updateMarkers() {
 
   // Add new markers
   props.beaches.forEach(beach => {
-    const markerElement = createFlagMarker(beach.state)
+    const isFull = beach.ocupacion?.state === 'red'
+    const markerElement = createFlagMarker(beach.state, isFull)
     if (props.isProvisional) {
       markerElement.style.opacity = '0.65'
       markerElement.style.transition = 'opacity 0.3s ease'
@@ -104,14 +120,31 @@ function updateMarkers() {
     const statusText = t(beach.state.toLowerCase())
     const popupStatus = t('map.flag_status', { status: statusText })
     
+    const cleanDesc = beach.description
+      ? beach.description.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
+      : ''
+    const truncateDesc = cleanDesc.length > 120 ? cleanDesc.slice(0, 120) + '...' : cleanDesc
+    const linkUrl = localePath(`/playas/${beach.id}`)
+
     // Create popup matching popup styling in HTML
     const popup = new mapboxgl.Popup({ offset: 25 })
       .setHTML(`
-        <div class="beach-info p-1 text-center">
-          <div class="beach-title font-bold text-gray-800 text-sm mb-1.5">${beach.title}</div>
-          <div class="beach-status text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full text-white inline-block ${bgClass}">
-            ${popupStatus}
+        <div class="beach-info p-1 text-left max-w-[200px]">
+          <div class="beach-title font-bold text-gray-800 text-sm mb-1">${beach.title}</div>
+          <div class="flex flex-wrap gap-1 mb-1.5">
+            <div class="beach-status text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full text-white inline-block ${bgClass}">
+              ${popupStatus}
+            </div>
+            ${isFull ? `
+              <div class="parking-status text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-red-600 text-white inline-block shadow-sm">
+                ${t('playas_page.parking_full')}
+              </div>
+            ` : ''}
           </div>
+          ${truncateDesc ? `<p class="text-[11px] text-gray-500 leading-normal mb-2">${truncateDesc}</p>` : ''}
+          <a href="${linkUrl}" class="beach-link inline-block text-[11px] font-bold text-emerald-600 hover:text-emerald-700 active:scale-[0.98] transition-all">
+            ${t('map.view_beach')} →
+          </a>
         </div>
       `)
 
@@ -297,14 +330,7 @@ onMounted(() => {
       attributionControl: false // Hide default attribution
     })
 
-    // Geolocation control
-    map.addControl(new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true
-      },
-      trackUserLocation: true,
-      showUserHeading: true
-    }), 'top-right')
+
 
     map.on('load', () => {
       updateMarkers()
@@ -320,11 +346,15 @@ onMounted(() => {
     })
 
     window.addEventListener('resize', onResize)
+    mapContainer.value.addEventListener('click', handlePopupLinkClick)
   }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
+  if (mapContainer.value) {
+    mapContainer.value.removeEventListener('click', handlePopupLinkClick)
+  }
   if (animationFrameId !== null) {
     cancelAnimationFrame(animationFrameId)
   }
@@ -332,6 +362,17 @@ onUnmounted(() => {
     map.remove()
   }
 })
+
+function handlePopupLinkClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (target && target.classList.contains('beach-link')) {
+    e.preventDefault()
+    const href = target.getAttribute('href')
+    if (href) {
+      router.push(href)
+    }
+  }
+}
 
 function onResize() {
   if (map) {
@@ -370,5 +411,34 @@ function onResize() {
 .mapboxgl-popup-close-button:hover {
   background-color: #f3f4f6 !important;
   color: #374151 !important;
+}
+
+/* Parking full pulsing dot style */
+.parking-full-dot {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 15px;
+  height: 15px;
+  background-color: #ef4444;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  animation: pulse-dot 1.8s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
 }
 </style>

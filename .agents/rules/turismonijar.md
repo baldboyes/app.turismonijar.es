@@ -2,9 +2,9 @@
 trigger: always_on
 ---
 
-# Turismo Níjar Project Rules & Standards
+# Vive Níjar Project Rules & Standards
 
-You are an expert Nuxt 4 developer working on the Turismo Níjar project. 
+You are an expert Nuxt 4 developer working on the Vive Níjar project. 
 You must ALWAYS follow these rules without being asked:
 
 ## 1. Internationalization

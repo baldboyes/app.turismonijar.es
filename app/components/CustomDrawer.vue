@@ -79,6 +79,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ChevronDown } from '@lucide/vue'
 import Button from '@/components/ui/button/Button.vue'
 import { useI18n } from '#imports'
+import { getSafeAreaInsets } from '~/utils/safeArea'
 
 const { t } = useI18n()
 
@@ -111,35 +112,9 @@ const safeAreaTop = ref(0)
 const safeAreaBottom = ref(0)
 const translateY = ref(550) // Valor por defecto antes de montar
 
-function getSafeAreaInsets() {
-  if (!import.meta.client) return { top: 0, bottom: 0 }
-  
-  const div = document.createElement('div')
-  div.style.position = 'fixed'
-  div.style.top = '0'
-  div.style.left = '0'
-  div.style.height = '0'
-  div.style.width = '0'
-  div.style.visibility = 'hidden'
-  div.style.marginTop = 'env(safe-area-inset-top, 0px)'
-  div.style.marginBottom = 'env(safe-area-inset-bottom, 0px)'
-  
-  document.body.appendChild(div)
-  const styles = window.getComputedStyle(div)
-  const top = parseFloat(styles.marginTop) || 0
-  const bottom = parseFloat(styles.marginBottom) || 0
-  document.body.removeChild(div)
-  
-  return { top, bottom }
-}
-
 function updateSafeArea() {
   const insets = getSafeAreaInsets()
   safeAreaTop.value = insets.top
-  // Fallback to 24px for top safe area on mobile if it returns 0 (Android status bar)
-  if (safeAreaTop.value === 0 && window.innerWidth <= 768) {
-    safeAreaTop.value = 24
-  }
   safeAreaBottom.value = insets.bottom
 }
 
@@ -381,12 +356,6 @@ defineExpose({
 
 <style scoped>
 .drawer-container {
-  --safe-area-top: env(safe-area-inset-top, 0px);
-}
-
-@media (max-width: 768px) {
-  .drawer-container {
-    --safe-area-top: env(safe-area-inset-top, 24px);
-  }
+  --safe-area-top: var(--safe-area-inset-top);
 }
 </style>

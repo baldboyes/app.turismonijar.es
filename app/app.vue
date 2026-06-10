@@ -3,16 +3,24 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <ClientOnly>
+      <Teleport to="body">
+        <BottomNav :style="{ zIndex: bottomNavZIndex }" />
+      </Teleport>
+    </ClientOnly>
   </ion-app>
 </template>
 <script setup lang="ts">
   import { defineCustomElements } from '@ionic/pwa-elements/loader'
   import { StatusBar, Style } from '@capacitor/status-bar';
+  import { Capacitor } from '@capacitor/core';
   import { onMounted, computed } from 'vue';
-  import { useI18n, useSeoMeta, useHead } from '#imports'
+  import { useI18n, useSeoMeta, useHead, useState } from '#imports'
+  import { getSafeAreaInsets } from '~/utils/safeArea'
   
   const { t } = useI18n()
   const appTitle = computed(() => t('seo.app.title'))
+  const bottomNavZIndex = useState('bottomNavZIndex', () => 9999)
 
   onMounted(async () => {
     if (import.meta.client) {
@@ -26,8 +34,17 @@
 
         // Asegurar que el WebView se superpone detrás de la barra de estado
         await StatusBar.setOverlaysWebView({ overlay: true });
+
+        // Resuelve el problema del safe-area-inset-top en dispositivos Android con Notch que devuelven 0px
+        const info = await StatusBar.getInfo();
+        if (info && typeof info.height === 'number' && info.height > 0) {
+          const insets = getSafeAreaInsets();
+          if (insets.top === 0) {
+            document.documentElement.style.setProperty('--safe-area-inset-top', `${info.height}px`);
+          }
+        }
       } catch (e) {
-        // Ignorar en web
+        // Ignorar en web o si falla
         console.warn('Error configurando StatusBar:', e);
       }
     }

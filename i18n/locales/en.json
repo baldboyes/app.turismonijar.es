@@ -52,7 +52,8 @@
     "explore_fallback": "Explore Níjar"
   },
   "map": {
-    "flag_status": "{status} Flag"
+    "flag_status": "{status} Flag",
+    "view_beach": "View beach"
   },
   "settings_panel": {
     "language_title": "Language / Idioma",
@@ -64,7 +65,7 @@
     "environment": "Environment"
   },
   "languages": {
-    "es": "Spanish",
+    "es": "Español",
     "en": "English"
   },
   "weather": {
@@ -151,7 +152,10 @@
     "description": "Description",
     "sand": "Sand",
     "width": "Width",
-    "length": "Length"
+    "length": "Length",
+    "parking_status": "Parking status",
+    "parking_full": "Parking full",
+    "parking_ok": "Parking space available"
   },
   "noticias_page": {
     "title": "News of Níjar",

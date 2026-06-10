@@ -8,7 +8,7 @@
     <!-- Top Bar -->
     <div 
       class="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-10"
-      style="padding-top: calc(env(safe-area-inset-top) + 1rem);"
+      style="padding-top: calc(var(--safe-area-inset-top) + 1rem);"
     >
       <!-- Page Counter -->
       <span class="text-white/80 text-xs font-bold font-mono tracking-wider px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm">
@@ -62,7 +62,7 @@
     <!-- Bottom Instructions (for Swiping on mobile) -->
     <div 
       class="absolute bottom-6 text-center z-10 px-4 md:hidden pointer-events-none"
-      style="padding-bottom: env(safe-area-inset-bottom);"
+      style="padding-bottom: var(--safe-area-inset-bottom);"
     >
       <p class="text-white/40 text-[10px] uppercase tracking-widest font-bold">
         &larr; Desliza para navegar &rarr;

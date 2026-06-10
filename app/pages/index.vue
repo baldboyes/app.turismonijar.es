@@ -41,14 +41,6 @@
         <BeachList :beaches="beaches" @select-beach="selectBeach" :fechas-servicio="fechasServicio" />
       </CustomDrawer>
     </Teleport>
-
-    <!-- Teleportar el BottomNav directamente a body como elemento fijo (100% de anchura) -->
-    <Teleport to="body" v-if="isMounted">
-      <BottomNav 
-        :style="{ zIndex: drawerState === 'full' ? 10 : 50 }"
-        class="fixed bottom-0 left-0 right-0 w-full"
-      />
-    </Teleport>
   </ion-page>
 </template>
 
@@ -63,7 +55,7 @@
 </style>
 
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted, watch } from 'vue';
   import { IonContent, IonPage } from '@ionic/vue';
   import CustomDrawer from '@/components/CustomDrawer.vue';
   import BeachMap from '@/components/BeachMap.vue';
@@ -72,7 +64,7 @@
   import LoadingOverlay from '@/components/LoadingOverlay.vue';
   import ErrorOverlay from '@/components/ErrorOverlay.vue';
   import type { Beach } from '~/types/beach';
-  import { useLocalePath, useSeoMeta, useI18n } from '#imports';
+  import { useLocalePath, useSeoMeta, useI18n, useState } from '#imports';
   import { useBeaches } from '~/composables/useBeaches';
 
   const localePath = useLocalePath()
@@ -84,6 +76,11 @@
   
   const mapRef = ref<any>(null)
   const drawerRef = ref<any>(null)
+
+  const bottomNavZIndex = useState<number>('bottomNavZIndex')
+  watch(drawerState, (state) => {
+    bottomNavZIndex.value = state === 'full' ? 10 : 9999
+  }, { immediate: true })
 
   const { 
     beaches, 

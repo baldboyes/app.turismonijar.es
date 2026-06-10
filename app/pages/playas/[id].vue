@@ -52,14 +52,26 @@
             <Waves class="w-16 h-16 opacity-30" />
           </div>
 
-          <!-- Live Flag status overlay -->
-          <div 
-            v-if="beach.bandera"
-            class="absolute bottom-4 left-4 px-4 py-2 rounded-2xl text-xs font-black tracking-wider uppercase shadow-lg flex items-center gap-2 backdrop-blur-md"
-            :class="getBadgeClass(beach.bandera)"
-          >
-            <span class="size-2.5 rounded-full shrink-0" :class="getDotColorClass(beach.bandera)"></span>
-            {{ $t(beach.bandera.toLowerCase()) }}
+          <!-- Live Flag & Parking status overlay container -->
+          <div class="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2 items-center">
+            <!-- Live Flag status overlay -->
+            <div 
+              v-if="beach.bandera"
+              class="px-4 py-2 rounded-2xl text-xs font-black tracking-wider uppercase shadow-lg flex items-center gap-2 backdrop-blur-md"
+              :class="getBadgeClass(beach.bandera)"
+            >
+              <span class="size-2.5 rounded-full shrink-0" :class="getDotColorClass(beach.bandera)"></span>
+              {{ $t(beach.bandera.toLowerCase()) }}
+            </div>
+
+            <!-- Parking status overlay -->
+            <div 
+              v-if="beach.ocupacion?.state === 'red'"
+              class="px-4 py-2 rounded-2xl text-xs font-black tracking-wider uppercase shadow-lg flex items-center gap-2 bg-red-600/90 text-white backdrop-blur-md"
+            >
+              <AlertTriangle class="w-3.5 h-3.5" />
+              <span>{{ $t('playas_page.parking_full') }}</span>
+            </div>
           </div>
         </div>
 
@@ -147,6 +159,7 @@
             :lng="beach.lng"
             :title="beach.title"
             :bandera="beach.bandera"
+            :ocupacion-state="beach.ocupacion?.state"
           />
         </div>
 
@@ -198,21 +211,16 @@
       </div>
     </ion-content>
 
-    <!-- Footer -->
-    <ion-footer>
-      <BottomNav class="fixed bottom-0 left-0 right-0 w-full" style="z-index: 50;" />
-    </ion-footer>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import { onMounted, computed } from 'vue'
-import { IonPage, IonContent, IonFooter } from '@ionic/vue'
-import { ChevronLeft, Waves, AlertCircle, MapPin, Ruler, Expand, Accessibility, Info, Phone, Umbrella } from '@lucide/vue'
+import { IonPage, IonContent } from '@ionic/vue'
+import { ChevronLeft, Waves, AlertCircle, MapPin, Ruler, Expand, Accessibility, Info, Phone, Umbrella, AlertTriangle } from '@lucide/vue'
 import { useRoute, useRouter, useLocalePath, useSeoMeta, useI18n } from '#imports'
 import { useBeachesDetailed } from '~/composables/useBeachesDetailed'
 import BeachDetailMap from '@/components/BeachDetailMap.vue'
-import BottomNav from '@/components/BottomNav.vue'
 
 const route = useRoute()
 const router = useRouter()

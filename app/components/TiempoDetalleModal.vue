@@ -1,7 +1,8 @@
 <template>
   <div
     v-if="weatherData"
-    class="w-full flex flex-col select-none relative"
+    class="w-full flex flex-col select-none relative text-white"
+    :class="{ 'theme-darker-boxes': isDarkerBoxes }"
     @click.stop
   >
       <!-- Background Decorative Blobs for Ambient Glow -->
@@ -14,7 +15,7 @@
       <div 
         @click.stop="emit('close')" 
         class="fixed right-4 z-[110] hover:bg-white/25 active:scale-95 text-white p-2 rounded-full transition-all cursor-pointer flex items-center justify-center fixed-close-btn"
-        style="top: calc(env(safe-area-inset-top) + 1rem);"
+        style="top: calc(var(--safe-area-inset-top, 0px) + 1rem);"
         :aria-label="t('weather.close')"
       >
         <X class="w-6 h-6" />
@@ -294,6 +295,11 @@ onMounted(() => {
   })
 })
 
+const props = defineProps<{
+  simulatedState?: 'sunny' | 'cloudy' | 'rainy' | 'snowy'
+  simulatedIsDay?: boolean
+}>()
+
 const {
   weatherData,
   isDay,
@@ -303,11 +309,18 @@ const {
   uv,
   imgTiempo,
   weatherDescription,
+  weatherState,
   getWeatherIcon,
   getWeatherDescription
 } = useWeather()
 
 const { t } = useI18n()
+
+const isDarkerBoxes = computed(() => {
+  const isDayVal = props.simulatedIsDay !== undefined ? props.simulatedIsDay : isDay.value
+  const stateVal = props.simulatedState !== undefined ? props.simulatedState : weatherState.value
+  return isDayVal && (stateVal === 'cloudy' || stateVal === 'rainy')
+})
 
 // Formatting helpers
 function formatHour(timeStr: string) {
@@ -531,9 +544,15 @@ defineExpose({
 .stagger-sun { animation-delay: 0.35s; }
 
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-area-inset-bottom);
 }
 .pt-safe {
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-area-inset-top);
+}
+
+/* Darker card boxes for rainy/cloudy day contrast */
+.theme-darker-boxes .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 </style>

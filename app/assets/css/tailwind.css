@@ -56,9 +56,9 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0.4018 0.1366 259.08);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: oklch(0.7523 0.1806 124.9);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -81,6 +81,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 
@@ -96,10 +99,34 @@
 
 
 .custom-header {
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-area-inset-top);
   /* Margen para la hora/batería */
   position: relative;
   z-index: 50;
   flex-shrink: 0;
   /* Evita que el layout de Ionic lo encoja */
+}
+
+@media (min-width: 768px) {
+  ion-footer {
+    background: transparent !important;
+    --background: transparent !important;
+    border-top: none !important;
+    box-shadow: none !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    pointer-events: none !important;
+    z-index: 9999 !important;
+  }
+
+  ion-footer * {
+    pointer-events: auto !important;
+  }
+}
+
+/* Hide Mapbox logo from maps */
+.mapboxgl-ctrl-logo {
+  display: none !important;
 }

@@ -52,8 +52,8 @@ export default defineNuxtConfig({
     scope: '/',
     includeAssets: ['favicon.ico', 'favicon.png', 'icon.svg', 'robots.txt'],
     manifest: {
-      name: 'Turismo Níjar',
-      short_name: 'Turismo Níjar',
+      name: 'Vive Níjar',
+      short_name: 'Vive Níjar',
       description: 'Guía de turismo y eventos',
       theme_color: '#ffffff',
       background_color: '#ffffff',
@@ -64,6 +64,12 @@ export default defineNuxtConfig({
       lang: 'es',
       categories: ['travel'],
       icons: [
+        {
+          src: '/icon-96x96.png',
+          sizes: '96x96',
+          type: 'image/png',
+          purpose: 'any'
+        },
         {
           src: '/icon-192x192.png',
           sizes: '192x192',

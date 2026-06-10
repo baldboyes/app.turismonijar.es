@@ -1,5 +1,6 @@
 {
-  "name": "app-turismonijar-es",
+  "name": "vive-nijar",
+  "displayName": "Vive Níjar",
   "integrations": {
     "capacitor": {}
   },

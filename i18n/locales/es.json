@@ -1,6 +1,6 @@
 {
   "home": "Inicio",
-  "title1": "Turismo Níjar",
+  "title1": "Vive Níjar",
   "beaches_title": "Banderas en Playas",
   "beach_flags": "Estado de las Banderas",
   "verde": "Baño permitido",
@@ -15,7 +15,7 @@
   "last_update_label": "Última actualización:",
   "seo": {
     "app": {
-      "title": "Turismo Níjar",
+      "title": "Vive Níjar",
       "description": "Aplicación para el turismo de Níjar"
     },
     "index": {
@@ -52,13 +52,14 @@
     "explore_fallback": "Explorar Níjar"
   },
   "map": {
-    "flag_status": "Bandera {status}"
+    "flag_status": "Bandera {status}",
+    "view_beach": "Ver playa"
   },
   "settings_panel": {
     "language_title": "Idioma / Language",
     "language_subtitle": "Selecciona el idioma de la aplicación",
     "info_title": "Información de la App",
-    "info_subtitle": "Detalles técnicos de la aplicación de Turismo Níjar.",
+    "info_subtitle": "Detalles técnicos de la aplicación de Vive Níjar.",
     "version": "Versión",
     "framework": "Framework",
     "environment": "Entorno"
@@ -151,7 +152,10 @@
     "description": "Descripción",
     "sand": "Arena",
     "width": "Anchura",
-    "length": "Longitud"
+    "length": "Longitud",
+    "parking_status": "Estado del parking",
+    "parking_full": "Parking lleno",
+    "parking_ok": "Parking libre"
   },
   "noticias_page": {
     "title": "Noticias de Níjar",

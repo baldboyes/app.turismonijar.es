@@ -14,5 +14,8 @@ export interface Beach {
   informacion?: string
   accesibilidad?: string
   caracteristicas?: string
+  ocupacion?: {
+    state: string
+  }
 }
 

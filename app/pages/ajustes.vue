@@ -22,7 +22,7 @@
           <div class="divide-y divide-gray-100 text-xs">
             <div class="flex justify-between py-2.5">
               <span class="text-gray-500 font-semibold">{{ $t('settings_panel.version') }}</span>
-              <span class="text-gray-800 font-bold">1.0.0</span>
+              <span class="text-gray-800 font-bold">1.0.1</span>
             </div>
             <div class="flex justify-between py-2.5">
               <span class="text-gray-500 font-semibold">{{ $t('settings_panel.framework') }}</span>
@@ -34,12 +34,38 @@
             </div>
           </div>
         </div>
+
+
+
+
+        <!-- Logo -->
+        <div class="flex flex-col gap-4 items-center justify-center mt-18 mb-8">
+          <img src="/turismonijar.svg" :alt="$t('title1')" class="w-32 lg:w-48 h-auto mx-auto" />
+
+
+          <!-- Contacto -->
+          <div class="flex flex-wrap lg:flex-nowrap gap-2 lg:gap-4 items-center justify-center text-xs">
+            <div>
+              <a href="https://www.turismonijar.es" target="_blank">turismonijar.es</a>
+            </div>
+            <div>
+              <a href="mailto:turismo@nijar.es">turismo@nijar.es</a>
+            </div>
+            <div>
+              <a href="tel:+34950612165">+34950612165</a>
+            </div>
+          </div>
+
+          <div class="flex justify-between gap-2 text-xs">
+            <span class="text-gray-400 font-semibold">{{ $t('settings_panel.version') }}</span>
+            <span class="text-gray-700 font-bold">1.0.1</span>
+          </div>
+
+        </div>
+
       </div>
     </ion-content>
 
-    <ion-footer>
-      <BottomNav />
-    </ion-footer>
   </ion-page>
 </template>
 
@@ -50,10 +76,9 @@
 </style>
 
 <script setup lang="ts">
-  import { IonContent, IonPage, IonFooter } from '@ionic/vue';
+  import { IonContent, IonPage } from '@ionic/vue';
   import { Settings } from '@lucide/vue';
   import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
-  import BottomNav from '@/components/BottomNav.vue';
   import { useSeoMeta, useI18n } from '#imports'
   
   const { t } = useI18n()

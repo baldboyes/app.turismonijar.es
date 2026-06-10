@@ -230,6 +230,32 @@ export function useWeather() {
     return t(key)
   })
 
+  const weatherState = computed<'sunny' | 'cloudy' | 'rainy' | 'snowy'>(() => {
+    if (!weatherData.value) return 'sunny'
+    const code = weatherData.value.current.weather_code
+
+    if (code === 0 || code === 1) {
+      return 'sunny'
+    }
+    if (code === 2 || code === 3 || code === 45 || code === 48) {
+      return 'cloudy'
+    }
+    if (
+      (code >= 51 && code <= 67) ||
+      (code >= 80 && code <= 82) ||
+      (code >= 95 && code <= 99)
+    ) {
+      return 'rainy'
+    }
+    if (
+      (code >= 71 && code <= 77) ||
+      (code >= 85 && code <= 86)
+    ) {
+      return 'snowy'
+    }
+    return 'sunny'
+  })
+
   function getWeatherIcon(code: number, isDayVal: boolean): string {
     const info = wmoIconCode[code.toString()]
     if (!info) return ''
@@ -254,8 +280,10 @@ export function useWeather() {
     uv,
     imgTiempo,
     weatherDescription,
+    weatherState,
     fetchWeather,
     getWeatherIcon,
     getWeatherDescription
   }
 }
+

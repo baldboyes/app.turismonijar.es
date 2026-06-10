@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'es.turismonijar.app',
-  appName: 'Turismo Níjar',
+  appName: 'Vive Níjar',
   webDir: 'dist',
   plugins: {
     StatusBar: {
