@@ -1,0 +1,57 @@
+project:
+  name: app-turismonijar-es
+  root: /Users/baldboy/desarrollo/nijar/app.turismonijar.es
+  stack:
+    framework: Nuxt 4 (SPA mode, ssr: false)
+    runtime: Node.js / Capacitor / Ionic
+    mobile:
+      platforms:
+        - ios
+        - android
+    ui:
+      framework: Vue 3
+      styling: Tailwind CSS v4 + @tailwindcss/vite
+      components: Shadcn-vue + Reka-ui
+    state_management: Pinia
+    i18n: @nuxtjs/i18n (locales: es, en; directory: ./i18n/locales/)
+    maps: Mapbox GL
+
+strict_tdd: false # Disabled: No test runner configured in package.json or project root
+
+testing:
+  runner: null
+  layers: {}
+  coverage: null
+  linter: null
+  type_checker: nuxi typecheck / tsc
+  formatter: null
+  capabilities:
+    unit: false
+    integration: false
+    e2e: false
+    types: true
+
+conventions:
+  i18n:
+    no_hardcoded_strings: true
+    locales_path: ./i18n/locales/
+    en: en.json
+    es: es.json
+    naming: hierarchical keys (e.g., components.product_card.title)
+  architecture:
+    clean_pages: true # zero heavy logic in pages/
+    component_extraction:
+      max_template_lines: 50
+      list_elements: extract to independent components
+      sub_state_management: extract to independent components
+    composables_and_utils:
+      no_repeating_functions: true
+      state_fetching_composables: true
+    ui_standards:
+      shadcn_only: true # use Shadcn-Vue components instead of native HTML inputs/buttons/labels
+      light_mode_only: true # no dark: classes or dark mode logic
+    layout_freedom:
+      public_area_expressive: true # total layout/CSS freedom, but keep clean architecture
+
+registry:
+  path: .atl/skill-registry.md
