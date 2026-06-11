@@ -119,7 +119,9 @@
     "uv_very_high": "Muy alto",
     "uv_extreme": "Extremo",
     "location": "Ubicación",
-    "sunrise_sunset": "Amanecer y Atardecer"
+    "sunrise_sunset": "Amanecer y Atardecer",
+    "last_update": "Última actualización: {time}",
+    "refreshing": "Obteniendo información..."
   },
   "components": {
     "bottom_nav": {

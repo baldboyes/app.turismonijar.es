@@ -119,7 +119,9 @@
     "uv_very_high": "Very High",
     "uv_extreme": "Extreme",
     "location": "Location",
-    "sunrise_sunset": "Sunrise & Sunset"
+    "sunrise_sunset": "Sunrise & Sunset",
+    "last_update": "Last update: {time}",
+    "refreshing": "Refreshing..."
   },
   "components": {
     "bottom_nav": {

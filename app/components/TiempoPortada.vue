@@ -16,7 +16,7 @@
     >
       <!-- Animated Dynamic Weather Background -->
       <WeatherBackground
-        v-if="!isLoading && weatherData"
+        v-if="weatherData"
         :weather-state="weatherState"
         :is-day="isDay"
         :is-fixed="showDetailsContent"
@@ -24,7 +24,7 @@
 
       <!-- Loaded Summary Card Content (visible when closed) -->
       <div 
-        v-if="!isLoading && weatherData" 
+        v-if="weatherData" 
         class="h-full w-full p-3 flex flex-col gap-1.5 justify-between transition-opacity duration-300"
         :class="isDetailOpen ? 'opacity-0 pointer-events-none absolute top-0 left-0 w-56 h-26' : 'opacity-100 relative z-10'"
       >
@@ -59,16 +59,22 @@
         </div>
 
         <!-- Bottom Row: Icon + Temperature & Condition -->
-        <div class="flex items-center gap-0 text-shadow-md">
-          <img 
-            v-if="imgTiempo"
-            :src="imgTiempo" 
-            :alt="weatherDescription" 
-            class="w-14 h-14 object-contain filter animate-float" 
-          />
-          <span class="text-4xl font-extrabold tracking-tight leading-none">
-            {{ temperature.toFixed(0) }}°
-          </span>
+        <div>
+          <div class="flex items-center gap-0 text-shadow-md">
+            <img 
+              v-if="imgTiempo"
+              :src="imgTiempo" 
+              :alt="weatherDescription" 
+              class="w-14 h-14 object-contain filter animate-float" 
+            />
+            <span class="text-4xl font-extrabold tracking-tight leading-none">
+              {{ temperature.toFixed(0) }}°
+            </span>
+          </div>
+          <div class="text-xs opacity-80 mt-1 text-shadow-sm select-none">
+            <span v-if="isRefreshing">{{ t('weather.refreshing') }}</span>
+            <span v-else-if="isError && lastUpdate">{{ t('weather.last_update', { time: formattedLastUpdate }) }}</span>
+          </div>
         </div>
       </div>
 
@@ -163,7 +169,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { Wind, Circle, Droplet } from '@lucide/vue'
 import { useWeather } from '~/composables/useWeather'
+import { useI18n } from '#imports'
 import TiempoDetalleModal from './TiempoDetalleModal.vue'
+
+const { t } = useI18n()
 
 const isDarkerBoxes = computed(() => {
   return isDay.value && (weatherState.value === 'cloudy' || weatherState.value === 'rainy')
@@ -186,11 +195,14 @@ const previewStates = [
   { label: 'Lluvia (Noche)', state: 'rainy' as const, isDay: false, temp: 11, code: 63 }
 ]
 
-const simulatedDetailState = ref({ state: 'sunny' as const, isDay: true })
+const simulatedDetailState = ref<{ state: 'sunny' | 'cloudy' | 'rainy' | 'snowy'; isDay: boolean }>({ state: 'sunny', isDay: true })
 
 const {
   weatherData,
   isLoading,
+  isRefreshing,
+  isError,
+  lastUpdate,
   isDay,
   temperature,
   windSpeed,
@@ -202,6 +214,14 @@ const {
   fetchWeather,
   getWeatherIcon
 } = useWeather()
+
+const formattedLastUpdate = computed(() => {
+  if (!lastUpdate.value) return ''
+  const date = new Date(lastUpdate.value)
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
+})
 
 const isDetailOpen = ref(false)
 const showDetailsContent = ref(false)

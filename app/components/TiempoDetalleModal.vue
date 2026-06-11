@@ -52,6 +52,10 @@
             {{ weatherDescription }}
           </span>
 
+          <div class="text-xs opacity-80 mt-1 text-shadow-sm select-none">
+            <span v-if="isRefreshing">{{ t('weather.refreshing') }}</span>
+            <span v-else-if="isError && lastUpdate">{{ t('weather.last_update', { time: formattedLastUpdate }) }}</span>
+          </div>
         </section>
 
         <!-- Hourly Forecast Section (with SVG Line Chart) -->
@@ -146,7 +150,7 @@
               </span>
             </div>
             <div class="-mt-2 pt-2 block text-[8px] lg:text-xs text-white/75">
-              Max: {{ weatherData.daily.uv_index_max[0].toFixed(2) }}
+              Max: {{ weatherData?.daily?.uv_index_max?.[0]?.toFixed(2) ?? '' }}
             </div>
           </div>
 
@@ -161,10 +165,10 @@
               <span class="text-xs font-semibold text-white/85">km/h</span>
             </div>
             <div class="-mt-2 pt-2 flex items-center justify-between text-xs text-white/80">
-              <span class="font-mono text-[8px] lg:text-xs">{{ t('weather.wind_direction') }}: {{ weatherData.current.wind_direction_10m }}°{{ getWindDirectionCardinal(weatherData.current.wind_direction_10m) }}</span>
+              <span class="font-mono text-[8px] lg:text-xs">{{ t('weather.wind_direction') }}: {{ weatherData?.current?.wind_direction_10m ?? 0 }}°{{ getWindDirectionCardinal(weatherData?.current?.wind_direction_10m ?? 0) }}</span>
               <ArrowUp 
                 class="w-3.5 h-3.5 text-white stroke-[3] transition-transform duration-500" 
-                :style="{ transform: `rotate(${weatherData.current.wind_direction_10m}deg)` }"
+                :style="{ transform: `rotate(${weatherData?.current?.wind_direction_10m ?? 0}deg)` }"
               />
             </div>
           </div>
@@ -176,7 +180,7 @@
               {{ t('weather.precipitation') }}
             </span>
             <div class="mt-3 flex items-baseline gap-0.5">
-              <span class="text-2xl lg:text-3xl font-black">{{ weatherData.current.precipitation.toFixed(1) }}</span>
+              <span class="text-2xl lg:text-3xl font-black">{{ weatherData?.current?.precipitation?.toFixed(1) ?? '0.0' }}</span>
               <span class="text-xs font-semibold text-white/85">mm</span>
             </div>
           </div>
@@ -239,13 +243,13 @@
                 <Sunrise class="w-5 h-5 text-amber-400 stroke-[2.2]" />
                 <div class="flex flex-col text-left">
                   <span class="text-[9px] font-bold text-white/50 uppercase tracking-widest leading-none">{{ t('weather.sunrise') }}</span>
-                  <span class="font-extrabold tracking-tight mt-0.5">{{ formatToAmPm(weatherData.daily.sunrise[0]) }}</span>
+                  <span class="font-extrabold tracking-tight mt-0.5">{{ formatToAmPm(weatherData?.daily?.sunrise?.[0]) }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-1.5 text-right">
                 <div class="flex flex-col items-end text-right">
                   <span class="text-[9px] font-bold text-white/50 uppercase tracking-widest leading-none">{{ t('weather.sunset') }}</span>
-                  <span class="font-extrabold tracking-tight mt-0.5">{{ formatToAmPm(weatherData.daily.sunset[0]) }}</span>
+                  <span class="font-extrabold tracking-tight mt-0.5">{{ formatToAmPm(weatherData?.daily?.sunset?.[0]) }}</span>
                 </div>
                 <Sunset class="w-5 h-5 text-amber-500 stroke-[2.2]" />
               </div>
@@ -253,9 +257,9 @@
           </div>
         </section>
 
-          <span class="text-[10px] text-white/70 mt-2 font-mono uppercase tracking-widest text-center">
-            {{ t('last_update_label') }} {{ weatherData.current.time.slice(11, 16) }}
-          </span>
+        <span class="text-[10px] text-white/70 mt-2 font-mono uppercase tracking-widest text-center">
+          {{ t('last_update_label') }} {{ weatherData?.current?.time ? weatherData.current.time.slice(11, 16) : '' }}
+        </span>
 
       </div>
     </div>
@@ -283,8 +287,8 @@ const emit = defineEmits(['close'])
 const scrollContainer = ref<HTMLElement | null>(null)
 
 const scrollToCurrentHour = () => {
-  if (!scrollContainer.value || !weatherData.value?.current?.time) return
-  const currentTimeStr = weatherData.value.current.time
+  const currentTimeStr = weatherData.value?.current?.time
+  if (!scrollContainer.value || !currentTimeStr) return
   const currentHour = new Date(currentTimeStr).getHours()
   scrollContainer.value.scrollLeft = currentHour * 70
 }
@@ -302,6 +306,9 @@ const props = defineProps<{
 
 const {
   weatherData,
+  isRefreshing,
+  isError,
+  lastUpdate,
   isDay,
   temperature,
   windSpeed,
@@ -316,6 +323,14 @@ const {
 
 const { t } = useI18n()
 
+const formattedLastUpdate = computed(() => {
+  if (!lastUpdate.value) return ''
+  const date = new Date(lastUpdate.value)
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
+})
+
 const isDarkerBoxes = computed(() => {
   const isDayVal = props.simulatedIsDay !== undefined ? props.simulatedIsDay : isDay.value
   const stateVal = props.simulatedState !== undefined ? props.simulatedState : weatherState.value
@@ -323,20 +338,22 @@ const isDarkerBoxes = computed(() => {
 })
 
 // Formatting helpers
-function formatHour(timeStr: string) {
+function formatHour(timeStr: string | undefined) {
   if (!timeStr) return ''
   return timeStr.substring(11, 16)
 }
 
-function formatSunriseSunset(timeStr: string) {
+function formatSunriseSunset(timeStr: string | undefined) {
   if (!timeStr) return ''
   return timeStr.substring(11, 16)
 }
 
-function formatToAmPm(timeStr: string) {
+function formatToAmPm(timeStr: string | undefined) {
   if (!timeStr) return ''
-  const timePart = timeStr.includes('T') ? timeStr.split('T')[1] : timeStr
-  const [hourStr, minStr] = timePart.split(':')
+  const timePart = timeStr.includes('T') ? (timeStr.split('T')[1] || '') : timeStr
+  const parts = timePart.split(':')
+  const hourStr = parts[0] || '00'
+  const minStr = parts[1] || '00'
   let hour = parseInt(hourStr, 10)
   const ampm = hour >= 12 ? 'pm' : 'am'
   hour = hour % 12
@@ -345,13 +362,13 @@ function formatToAmPm(timeStr: string) {
 }
 
 const sunPosition = computed(() => {
-  if (!weatherData.value?.daily?.sunrise?.[0] || !weatherData.value?.daily?.sunset?.[0]) {
+  const sunriseStr = weatherData.value?.daily?.sunrise?.[0]
+  const sunsetStr = weatherData.value?.daily?.sunset?.[0]
+  const currentTimeStr = weatherData.value?.current?.time
+
+  if (!sunriseStr || !sunsetStr || !currentTimeStr) {
     return { x: 40, y: 95, active: false, angleDeg: 180 }
   }
-
-  const sunriseStr = weatherData.value.daily.sunrise[0]
-  const sunsetStr = weatherData.value.daily.sunset[0]
-  const currentTimeStr = weatherData.value.current.time
 
   const parseTime = (str: string) => {
     return new Date(str).getTime()
@@ -414,14 +431,14 @@ const hourlyForecast = computed(() => {
   const h = weatherData.value.hourly
   return h.time.map((time, idx) => ({
     time,
-    temp: h.temperature_2m[idx],
-    humidity: h.relative_humidity_2m[idx],
-    rainProb: h.precipitation_probability[idx],
-    rain: h.rain[idx],
-    weatherCode: h.weather_code[idx],
-    windSpeed: h.wind_speed_10m[idx],
-    windDir: h.wind_direction_10m[idx],
-    isDayVal: h.is_day[idx] === 1
+    temp: h.temperature_2m?.[idx] ?? 0,
+    humidity: h.relative_humidity_2m?.[idx] ?? 0,
+    rainProb: h.precipitation_probability?.[idx] ?? 0,
+    rain: h.rain?.[idx] ?? 0,
+    weatherCode: h.weather_code?.[idx] ?? 0,
+    windSpeed: h.wind_speed_10m?.[idx] ?? 0,
+    windDir: h.wind_direction_10m?.[idx] ?? 0,
+    isDayVal: h.is_day?.[idx] === 1
   }))
 })
 
@@ -451,8 +468,8 @@ const chartPoints = computed(() => {
   const linePath = coords.map(c => `${c.x},${c.y}`).join(' L ')
   
   // Area path string (under the line to the bottom)
-  const startX = coords[0].x
-  const endX = coords[coords.length - 1].x
+  const startX = coords[0]?.x ?? 0
+  const endX = coords[coords.length - 1]?.x ?? 0
   const areaPath = `M ${startX},${height} L ${linePath} L ${endX},${height} Z`
 
   return {
@@ -463,8 +480,8 @@ const chartPoints = computed(() => {
 })
 
 const currentHourIndex = computed(() => {
-  if (!weatherData.value?.current?.time) return -1
-  const currentTimeStr = weatherData.value.current.time
+  const currentTimeStr = weatherData.value?.current?.time
+  if (!currentTimeStr) return -1
   return new Date(currentTimeStr).getHours()
 })
 

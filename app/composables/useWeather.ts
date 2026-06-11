@@ -49,6 +49,8 @@ interface WeatherData {
   current: WeatherCurrent
   hourly: WeatherHourly
   daily: WeatherDaily
+  error?: boolean // API payload key for error states
+  reason?: string // API payload key for error detail
 }
 
 const wmoIconCode: Record<string, { day: { description: string; image: string }; night: { description: string; image: string } }> = {
@@ -168,71 +170,146 @@ const wmoIconCode: Record<string, { day: { description: string; image: string };
 
 // Module-level shared states
 const weatherData = ref<WeatherData | null>(null)
+const lastUpdate = ref<number | null>(null)
+const isRefreshing = ref(false)
 const isLoading = ref(false)
 const isError = ref(false)
+
+let refreshTimer: any = null
+let isInitialized = false
+let hasFetchedApi = false
+
+const WEATHER_DATA_KEY = 'weather_cached_data'
+const WEATHER_TIME_KEY = 'weather_last_update_time'
+
+function initCache() {
+  if (isInitialized || !import.meta.client) return
+  isInitialized = true
+  try {
+    const cached = localStorage.getItem(WEATHER_DATA_KEY)
+    const time = localStorage.getItem(WEATHER_TIME_KEY)
+    if (cached) {
+      weatherData.value = JSON.parse(cached)
+    }
+    if (time) {
+      lastUpdate.value = parseInt(time, 10)
+    }
+  } catch (err) {
+    console.warn('Failed to load weather cache from localStorage:', err)
+  }
+}
+
+function scheduleNext(success: boolean) {
+  if (!import.meta.client) return
+  if (refreshTimer) clearTimeout(refreshTimer)
+  const delay = success ? 5 * 60 * 1000 : 30 * 1000
+  refreshTimer = setTimeout(() => {
+    fetchWeather(true)
+  }, delay)
+}
+
+async function fetchWeather(force = false) {
+  if (isRefreshing.value || isLoading.value) return
+  if (weatherData.value && !force && hasFetchedApi) return
+
+  if (!weatherData.value) {
+    isLoading.value = true
+  } else {
+    isRefreshing.value = true
+  }
+
+  try {
+    const response = await fetch('https://baldboy.es/tiempo/datos_meteorologicos.json', { cache: 'no-store' })
+    if (!response.ok) throw new Error('Weather API request failed')
+    
+    const data = await response.json()
+    
+    if (data?.error === true || !data?.current || !data?.daily) {
+      throw new Error('Invalid weather API payload structure')
+    }
+
+    weatherData.value = data
+    lastUpdate.value = Date.now()
+    isError.value = false
+    hasFetchedApi = true
+
+    try {
+      localStorage.setItem(WEATHER_DATA_KEY, JSON.stringify(data))
+      localStorage.setItem(WEATHER_TIME_KEY, lastUpdate.value.toString())
+    } catch (err) {
+      console.warn('Failed to save weather cache to localStorage:', err)
+    }
+
+    scheduleNext(true)
+  } catch (error) {
+    console.warn('Error al obtener los datos meteorológicos:', error)
+    isError.value = true
+    scheduleNext(false)
+  } finally {
+    isLoading.value = false
+    isRefreshing.value = false
+  }
+}
+
+if (import.meta.client) {
+  const handleVisibilityOrFocus = () => {
+    if (document.visibilityState === 'visible') {
+      fetchWeather(true)
+    }
+  }
+  window.addEventListener('focus', handleVisibilityOrFocus)
+  document.addEventListener('visibilitychange', handleVisibilityOrFocus)
+}
 
 export function useWeather() {
   const { t } = useI18n()
 
-  async function fetchWeather(force = false) {
-    if (weatherData.value && !force) return
-
-    isLoading.value = true
-    isError.value = false
-    try {
-      const response = await fetch('https://baldboy.es/tiempo/datos_meteorologicos.json', { cache: 'no-store' })
-      if (!response.ok) throw new Error('Weather API request failed')
-      const data = await response.json()
-      weatherData.value = data
-    } catch (error) {
-      console.error('Error al obtener los datos meteorológicos:', error)
-      isError.value = true
-    } finally {
-      isLoading.value = false
-    }
-  }
+  initCache()
 
   const isDay = computed(() => {
-    return weatherData.value?.current.is_day === 1
+    return weatherData.value?.current?.is_day === 1
   })
 
   const temperature = computed(() => {
-    return weatherData.value?.current.temperature_2m ?? 0
+    return weatherData.value?.current?.temperature_2m ?? 0
   })
 
   const windSpeed = computed(() => {
-    return weatherData.value?.current.wind_speed_10m ?? 0
+    return weatherData.value?.current?.wind_speed_10m ?? 0
   })
 
   const humidity = computed(() => {
-    return weatherData.value?.current.relative_humidity_2m ?? 0
+    return weatherData.value?.current?.relative_humidity_2m ?? 0
   })
 
   const uv = computed(() => {
-    if (!weatherData.value?.daily.uv_index_max?.length) return 0
-    return Math.round(weatherData.value.daily.uv_index_max[0])
+    const val = weatherData.value?.daily?.uv_index_max?.[0]
+    return val !== undefined && typeof val === 'number' ? Math.round(val) : 0
   })
 
   const imgTiempo = computed(() => {
-    if (!weatherData.value) return null
-    const code = weatherData.value.current.weather_code.toString()
-    const info = wmoIconCode[code]
+    if (!weatherData.value?.current) return null
+    const code = weatherData.value.current.weather_code
+    if (code === undefined || code === null) return null
+    const info = wmoIconCode[code.toString()]
     if (!info) return null
     return isDay.value ? info.day.image : info.night.image
   })
 
   const weatherDescription = computed(() => {
-    if (!weatherData.value) return ''
-    const code = weatherData.value.current.weather_code.toString()
-    const info = wmoIconCode[code]
+    if (!weatherData.value?.current) return ''
+    const code = weatherData.value.current.weather_code
+    if (code === undefined || code === null) return ''
+    const info = wmoIconCode[code.toString()]
     if (!info) return ''
     const key = isDay.value ? info.day.description : info.night.description
     return t(key)
   })
 
   const weatherState = computed<'sunny' | 'cloudy' | 'rainy' | 'snowy'>(() => {
-    if (!weatherData.value) return 'sunny'
+    if (!weatherData.value?.current) return 'sunny'
     const code = weatherData.value.current.weather_code
+    if (code === undefined || code === null) return 'sunny'
 
     if (code === 0 || code === 1) {
       return 'sunny'
@@ -257,12 +334,14 @@ export function useWeather() {
   })
 
   function getWeatherIcon(code: number, isDayVal: boolean): string {
+    if (code === undefined || code === null) return ''
     const info = wmoIconCode[code.toString()]
     if (!info) return ''
     return isDayVal ? info.day.image : info.night.image
   }
 
   function getWeatherDescription(code: number, isDayVal: boolean): string {
+    if (code === undefined || code === null) return ''
     const info = wmoIconCode[code.toString()]
     if (!info) return ''
     const key = isDayVal ? info.day.description : info.night.description
@@ -273,6 +352,8 @@ export function useWeather() {
     weatherData,
     isLoading,
     isError,
+    isRefreshing,
+    lastUpdate,
     isDay,
     temperature,
     windSpeed,
