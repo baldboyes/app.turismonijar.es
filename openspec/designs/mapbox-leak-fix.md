@@ -1,209 +1,79 @@
-# Design: Mapbox GL Component Memory Leak Fixes
+# Design: Investigar cómo tenemos estructurado Mapbox GL para evitar fugas de memoria
 
-This document details the design and implementation of the memory leak fixes for components using Mapbox GL in the project.
+## Technical Approach
 
----
+El enfoque técnico consiste en robustecer el ciclo de vida de desmontaje (`onUnmounted`) en los componentes de mapa que utilizan Mapbox GL. Se implementa un control estricto de la limpieza de temporizadores (`setTimeout`), eliminación explícita de marcadores del DOM y desreferenciación (`nullify`) de los objetos de mapa y marcador. Con esto se asegura que no queden referencias retenidas en memoria por cierres (closures) o manejadores de eventos.
 
-## 1. Problem & Context
+## Architecture Decisions
 
-When navigating between pages in the application (e.g., from the beaches list page to a beach detail page, and back), the DOM container of the Mapbox map is destroyed, but the JavaScript references to the map instance, markers, and pending timeout callbacks remained active. 
+### Decisión: Control de temporizadores asíncronos en componentes de mapa
 
-This resulted in:
-1. **Memory accumulation (JS Heap size increase)** due to retained references of map, marker instances, and closures.
-2. **Runtime script errors** when pending callbacks (like resize triggers and initialization loops) attempted to operate on a destroyed map instance.
+| Opción | Tradeoff | Decisión |
+|---|---|---|
+| Creación de un `Set` y helper local `safeSetTimeout` por componente | Encapsula el ciclo de vida de los timers de forma local sin añadir dependencias globales. | **Seleccionada**. Es simple, directa y segura para SPA. |
+| Creación de un composable global `useTimeoutTracker` | Reutilizable, pero añade complejidad innecesaria para solo dos componentes de mapa. | Rechazada. |
+| Cancelación individual manual guardando cada ID en variables separadas | Requiere declarar múltiples variables y es propensa a errores u omisiones si se añaden más timers. | Rechazada. |
 
----
+### Decisión: Limpieza explícita de marcadores y mapa
 
-## 2. Affected Components
+| Opción | Tradeoff | Decisión |
+|---|---|---|
+| Llamar explícitamente a `.remove()` y asignar `null` a las variables en `onUnmounted` | Asegura que se eliminen del DOM y se rompan las referencias circulares en los closures de los listeners. | **Seleccionada**. Es la única forma garantizada de liberar memoria. |
+| Confiar únicamente en `map.remove()` de Mapbox | Deja las variables y closures en memoria, impidiendo que el Garbage Collector libere el contexto. | Rechazada. |
 
-- **[BeachMap.vue](../../app/components/BeachMap.vue)**: The main beach locator map component.
-- **[BeachDetailMap.vue](../../app/components/BeachDetailMap.vue)**: The single beach detail map component.
+## Data Flow
 
----
-
-## 3. Implementation Details
-
-### A. Timer Registration & Cleanup
-We introduced a tracking system for all `setTimeout` calls within these components to prevent execution after unmount.
-
-- A `timeoutIds` Set is defined in `<script setup>`:
-  ```typescript
-  const timeoutIds = new Set<any>()
-  ```
-- A helper `safeSetTimeout` utility registers and manages active timers:
-  ```typescript
-  function safeSetTimeout(fn: () => void, delay: number) {
-    const id = setTimeout(() => {
-      timeoutIds.delete(id)
-      fn()
-    }, delay)
-    timeoutIds.add(id)
-    return id
-  }
-  ```
-- In `onUnmounted`, all remaining timeouts are cleared:
-  ```typescript
-  timeoutIds.forEach(id => clearTimeout(id))
-  timeoutIds.clear()
-  ```
-
-### B. Marker and Map Reference Cleanup
-We explicitly clean up all markers and nullify references upon unmounting:
-
-- **Markers**: For multiple markers (`BeachMap.vue`), we iterate and call `.remove()`:
-  ```typescript
-  markers.forEach(marker => marker.remove())
-  markers.clear()
-  ```
-  For single marker (`BeachDetailMap.vue`):
-  ```typescript
-  if (marker) {
-    marker.remove()
-    marker = null
-  }
-  ```
-- **Map Instance**:
-  ```typescript
-  if (map) {
-    map.remove()
-    map = null
-  }
-  ```
-
----
-
-## 4. Diffs
-
-### Changes in `BeachMap.vue`
-```diff
-@@ -32,6 +32,16 @@
- let map: mapboxgl.Map | null = null
- const markers = new Map<number | string, mapboxgl.Marker>()
- let animationFrameId: number | null = null
-+const timeoutIds = new Set<any>()
-+
-+function safeSetTimeout(fn: () => void, delay: number) {
-+  const id = setTimeout(() => {
-+    timeoutIds.delete(id)
-+    fn()
-+  }, delay)
-+  timeoutIds.add(id)
-+  return id
-+}
- 
- mapboxgl.accessToken = 'pk.eyJ1IjoiYmFsZGJveSIsImEiOiJhMzBzeklzIn0.buJ1PP9-a9JkqNWGHW-H0g'
- 
-@@ -332,13 +332,14 @@
- 
- 
-     map.on('load', () => {
-+      if (!map) return
-       updateMarkers()
-       // Force Mapbox resize immediately and after page transition (400ms)
--      map?.resize()
--      setTimeout(() => {
-+      map.resize()
-+      safeSetTimeout(() => {
-         map?.resize()
-       }, 100)
--      setTimeout(() => {
-+      safeSetTimeout(() => {
-         map?.resize()
-         fitBounds()
-       }, 500)
-@@ -349,6 +349,10 @@
- })
- 
- onUnmounted(() => {
-+  // Clear all pending timeouts to prevent memory leaks or errors
-+  timeoutIds.forEach(id => clearTimeout(id))
-+  timeoutIds.clear()
-+
-   window.removeEventListener('resize', onResize)
-   if (mapContainer.value) {
-     mapContainer.value.removeEventListener('click', handlePopupLinkClick)
-@@ -355,8 +359,14 @@
-   if (animationFrameId !== null) {
-     cancelAnimationFrame(animationFrameId)
-   }
-+
-+  // Explicitly remove all markers to break references and event listeners
-+  markers.forEach(marker => marker.remove())
-+  markers.clear()
-+
-   if (map) {
-     map.remove()
-+    map = null
-   }
- })
- 
-@@ -372,7 +372,7 @@
- 
- function onResize() {
-   if (map) {
--    setTimeout(() => {
-+    safeSetTimeout(() => {
-       map?.resize()
-     }, 100)
-   }
+```
+[Componente Montado] ──→ [Carga de Mapbox] ──→ [Registra safeSetTimeout / Marcadores]
+                                                               │
+[Navegación / Desmontar] ←── [Limpiar safeSetTimeout] ←── [onUnmounted gatillado]
+         │
+         └──→ [Remover Marcadores del DOM] ──→ [map.remove()] ──→ [Nulificar variables (GC)]
 ```
 
-### Changes in `BeachDetailMap.vue`
-```diff
-@@ -20,6 +20,16 @@
- const mapContainer = ref<HTMLElement | null>(null)
- let map: mapboxgl.Map | null = null
- let marker: mapboxgl.Marker | null = null
-+const timeoutIds = new Set<any>()
-+
-+function safeSetTimeout(fn: () => void, delay: number) {
-+  const id = setTimeout(() => {
-+    timeoutIds.delete(id)
-+    fn()
-+  }, delay)
-+  timeoutIds.add(id)
-+  return id
-+}
- 
- mapboxgl.accessToken = 'pk.eyJ1IjoiYmFsZGJveSIsImEiOiJhMzBzeklzIn0.buJ1PP9-a9JkqNWGHW-H0g'
- 
-@@ -129,10 +129,10 @@
- 
-     // Trigger map resize immediately and after animations/transitions
-     map.resize()
--    setTimeout(() => {
-+    safeSetTimeout(() => {
-       map?.resize()
-     }, 100)
--    setTimeout(() => {
-+    safeSetTimeout(() => {
-       map?.resize()
-     }, 500)
-   })
-@@ -149,12 +149,18 @@
- })
- 
- onUnmounted(() => {
-+  // Clear all pending timeouts to prevent memory leaks or errors
-+  timeoutIds.forEach(id => clearTimeout(id))
-+  timeoutIds.clear()
-+
-   window.removeEventListener('resize', onResize)
-   if (marker) {
-     marker.remove()
-+    marker = null
-   }
-   if (map) {
-     map.remove()
-+    map = null
-   }
- })
+## File Changes
+
+| File | Action | Description |
+|------|--------|-------------|
+| `../../app/components/BeachMap.vue` | Modify | Añadido el control de timers, limpieza explícita de marcadores y anulación de la variable `map` al desmontar. |
+| `../../app/components/BeachDetailMap.vue` | Modify | Añadido el control de timers, limpieza del marcador y anulación de variables `map` y `marker` al desmontar. |
+
+## Interfaces / Contracts
+
+Se añade la función `safeSetTimeout` dentro de la lógica del componente:
+
+```typescript
+const timeoutIds = new Set<any>()
+
+function safeSetTimeout(fn: () => void, delay: number) {
+  const id = setTimeout(() => {
+    timeoutIds.delete(id)
+    fn()
+  }, delay)
+  timeoutIds.add(id)
+  return id
+}
 ```
 
----
+En `onUnmounted`, se limpian de la siguiente forma:
 
-## 5. Verification & Testing
+```typescript
+timeoutIds.forEach(id => clearTimeout(id))
+timeoutIds.clear()
+```
 
-1. Navigate between pages in Chrome DevTools with **Performance Monitor** active. 
-2. Verify that **JS Heap Size** and **DOM Nodes** return to baseline levels shortly after navigating away from map components.
-3. Inspect memory using the **Heap Snapshot** tool to ensure no lingering `Map`, `Marker`, or `Popup` objects remain referenced.
+## Testing Strategy
+
+| Layer | What to Test | Approach |
+|-------|-------------|----------|
+| Unit | No aplica | Lógica local del mapa dependiente de APIs de navegador y DOM de Mapbox. |
+| Integration | Pérdida de memoria en cambios de ruta | Ejecutar auditoría en Chrome DevTools Performance Monitor navegando entre mapas y verificar que los DOM Nodes y el JS Heap Size retornen al baseline. |
+| E2E | No aplica | No se requiere para problemas de recolección de basura. |
+
+## Migration / Rollout
+
+No migration required.
+
+## Open Questions
+
+- None.

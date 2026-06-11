@@ -127,16 +127,16 @@ function initMap() {
     showCompass: false
   }), 'top-right')
 
+  // Create custom marker immediately
+  const isFull = props.ocupacionState === 'red'
+  const markerElement = createFlagMarker(props.bandera, isFull)
+  
+  marker = new mapboxgl.Marker(markerElement)
+    .setLngLat([props.lng, props.lat])
+    .addTo(map)
+
   map.on('load', () => {
     if (!map) return
-
-    // Create custom marker
-    const isFull = props.ocupacionState === 'red'
-    const markerElement = createFlagMarker(props.bandera, isFull)
-    
-    marker = new mapboxgl.Marker(markerElement)
-      .setLngLat([props.lng, props.lat])
-      .addTo(map)
 
     // Trigger map resize immediately and after animations/transitions
     map.resize()
