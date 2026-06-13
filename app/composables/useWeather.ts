@@ -324,7 +324,14 @@ export function useWeather() {
   })
 
   const uv = computed(() => {
-    const val = weatherData.value?.daily?.uv_index_max?.[0]
+    const currentHour = weatherData.value?.current?.time?.slice(0, 13)
+    const hourly = weatherData.value?.hourly
+    const hourlyIndex = currentHour && hourly?.time
+      ? hourly.time.findIndex((time) => time.slice(0, 13) === currentHour)
+      : -1
+    const val = hourlyIndex >= 0
+      ? hourly?.uv_index?.[hourlyIndex]
+      : weatherData.value?.daily?.uv_index_max?.[0]
     return val !== undefined && typeof val === 'number' ? Math.round(val) : 0
   })
 
