@@ -11,7 +11,7 @@
     </header>
 
     <ion-content class="custom-content">
-      <div class="max-w-[1024px] mx-auto p-4 space-y-6">
+      <div class="max-w-[1024px] mx-auto p-4 space-y-6 pb-28">
         <!-- Language Switcher Card Component -->
         <LanguageSwitcher />
 
@@ -34,8 +34,6 @@
             </div>
           </div>
         </div>
-
-
 
 
         <!-- Logo -->

@@ -168,26 +168,41 @@ const wmoIconCode: Record<string, { day: { description: string; image: string };
   }
 }
 
-// Module-level shared states
+// Weather feature architecture and maintenance rules: docs/weather-mini-cards.md
+export const WEATHER_CACHE_KEYS = {
+  data: 'weather_cached_data',
+  lastUpdate: 'weather_last_update_time'
+} as const
+
+export const WEATHER_REFRESH_INTERVAL_MS = 5 * 60 * 1000
+export const WEATHER_RETRY_INTERVAL_MS = 30 * 1000
+
+export type WeatherState = 'sunny' | 'cloudy' | 'rainy' | 'snowy'
+
+// Shared weather contract: all consumers observe these refs and the single runtime below.
 const weatherData = ref<WeatherData | null>(null)
 const lastUpdate = ref<number | null>(null)
 const isRefreshing = ref(false)
 const isLoading = ref(false)
 const isError = ref(false)
 
-let refreshTimer: any = null
-let isInitialized = false
-let hasFetchedApi = false
+const weatherRuntime = {
+  cacheHydrated: false,
+  listenersRegistered: false,
+  refreshTimer: null as ReturnType<typeof setTimeout> | null,
+  hasFetchedApi: false
+}
 
-const WEATHER_DATA_KEY = 'weather_cached_data'
-const WEATHER_TIME_KEY = 'weather_last_update_time'
+function canUseBrowserRuntime() {
+  return import.meta.client && typeof window !== 'undefined' && typeof document !== 'undefined'
+}
 
-function initCache() {
-  if (isInitialized || !import.meta.client) return
-  isInitialized = true
+function hydrateWeatherCache() {
+  if (weatherRuntime.cacheHydrated || !canUseBrowserRuntime()) return
+  weatherRuntime.cacheHydrated = true
   try {
-    const cached = localStorage.getItem(WEATHER_DATA_KEY)
-    const time = localStorage.getItem(WEATHER_TIME_KEY)
+    const cached = localStorage.getItem(WEATHER_CACHE_KEYS.data)
+    const time = localStorage.getItem(WEATHER_CACHE_KEYS.lastUpdate)
     if (cached) {
       weatherData.value = JSON.parse(cached)
     }
@@ -199,19 +214,54 @@ function initCache() {
   }
 }
 
+function handleVisibilityOrFocus() {
+  if (document.visibilityState === 'visible') {
+    fetchWeather(true)
+  }
+}
+
+export function ensureWeatherRuntime() {
+  if (!canUseBrowserRuntime()) return
+  hydrateWeatherCache()
+
+  // App-lifetime ownership: one focus/visibility listener pair serves every consumer.
+  if (weatherRuntime.listenersRegistered) return
+  weatherRuntime.listenersRegistered = true
+  window.addEventListener('focus', handleVisibilityOrFocus)
+  document.addEventListener('visibilitychange', handleVisibilityOrFocus)
+}
+
+export function cleanupWeatherRuntime() {
+  // Explicit cleanup hook for tests/dev harnesses; production keeps the runtime for app lifetime.
+  if (!canUseBrowserRuntime()) return
+
+  if (weatherRuntime.refreshTimer) {
+    clearTimeout(weatherRuntime.refreshTimer)
+    weatherRuntime.refreshTimer = null
+  }
+
+  if (weatherRuntime.listenersRegistered) {
+    window.removeEventListener('focus', handleVisibilityOrFocus)
+    document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
+    weatherRuntime.listenersRegistered = false
+  }
+}
+
 function scheduleNext(success: boolean) {
-  if (!import.meta.client) return
-  if (refreshTimer) clearTimeout(refreshTimer)
-  const delay = success ? 5 * 60 * 1000 : 30 * 1000
-  refreshTimer = setTimeout(() => {
+  if (!canUseBrowserRuntime()) return
+  if (weatherRuntime.refreshTimer) clearTimeout(weatherRuntime.refreshTimer)
+  const delay = success ? WEATHER_REFRESH_INTERVAL_MS : WEATHER_RETRY_INTERVAL_MS
+  weatherRuntime.refreshTimer = setTimeout(() => {
     fetchWeather(true)
   }, delay)
 }
 
 async function fetchWeather(force = false) {
+  ensureWeatherRuntime()
   if (isRefreshing.value || isLoading.value) return
-  if (weatherData.value && !force && hasFetchedApi) return
+  if (weatherData.value && !force && weatherRuntime.hasFetchedApi) return
 
+  // Cache-first safeguard: only show the skeleton when there is no active weather payload.
   if (!weatherData.value) {
     isLoading.value = true
   } else {
@@ -231,11 +281,11 @@ async function fetchWeather(force = false) {
     weatherData.value = data
     lastUpdate.value = Date.now()
     isError.value = false
-    hasFetchedApi = true
+    weatherRuntime.hasFetchedApi = true
 
     try {
-      localStorage.setItem(WEATHER_DATA_KEY, JSON.stringify(data))
-      localStorage.setItem(WEATHER_TIME_KEY, lastUpdate.value.toString())
+      localStorage.setItem(WEATHER_CACHE_KEYS.data, JSON.stringify(data))
+      localStorage.setItem(WEATHER_CACHE_KEYS.lastUpdate, lastUpdate.value.toString())
     } catch (err) {
       console.warn('Failed to save weather cache to localStorage:', err)
     }
@@ -244,6 +294,7 @@ async function fetchWeather(force = false) {
   } catch (error) {
     console.warn('Error al obtener los datos meteorológicos:', error)
     isError.value = true
+    // Keep existing cached/live data visible and retry without competing refresh timers.
     scheduleNext(false)
   } finally {
     isLoading.value = false
@@ -251,20 +302,10 @@ async function fetchWeather(force = false) {
   }
 }
 
-if (import.meta.client) {
-  const handleVisibilityOrFocus = () => {
-    if (document.visibilityState === 'visible') {
-      fetchWeather(true)
-    }
-  }
-  window.addEventListener('focus', handleVisibilityOrFocus)
-  document.addEventListener('visibilitychange', handleVisibilityOrFocus)
-}
-
 export function useWeather() {
   const { t } = useI18n()
 
-  initCache()
+  ensureWeatherRuntime()
 
   const isDay = computed(() => {
     return weatherData.value?.current?.is_day === 1
@@ -306,7 +347,7 @@ export function useWeather() {
     return t(key)
   })
 
-  const weatherState = computed<'sunny' | 'cloudy' | 'rainy' | 'snowy'>(() => {
+  const weatherState = computed<WeatherState>(() => {
     if (!weatherData.value?.current) return 'sunny'
     const code = weatherData.value.current.weather_code
     if (code === undefined || code === null) return 'sunny'
@@ -367,4 +408,3 @@ export function useWeather() {
     getWeatherDescription
   }
 }
-

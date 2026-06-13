@@ -1,19 +1,17 @@
 <template>
-  <!-- 1. PRODUCTION MODE (renders single card) -->
-  <template v-if="!simulationMode">
-    <div 
-      class="select-none weather-card text-white"
-      :class="[
-        isDetailOpen 
-          ? 'fixed inset-0 w-screen h-screen rounded-none z-[100] cursor-default overflow-y-auto pb-safe' 
-          : 'fixed rounded-3xl w-56 h-26 cursor-pointer z-20 shadow-lg overflow-hidden',
-        { 'theme-darker-boxes': isDarkerBoxes }
-      ]"
-      :style="isDetailOpen 
-        ? { top: '0px', left: '0px', width: '100vw', height: '100vh', borderRadius: '0px' } 
-        : { top: 'calc(var(--safe-area-inset-top, 0px) + 16px)', left: '16px', width: '224px', height: '104px', borderRadius: '24px' }"
-      @click="!isDetailOpen && openDetail()"
-    >
+  <div
+    class="select-none weather-card text-white"
+    :class="[
+      isDetailOpen
+        ? 'fixed inset-0 w-screen h-screen rounded-none z-[100] cursor-default overflow-y-auto pb-safe'
+        : 'fixed rounded-3xl w-56 h-26 cursor-pointer z-20 shadow-lg overflow-hidden',
+      { 'theme-darker-boxes': isDarkerBoxes }
+    ]"
+    :style="isDetailOpen
+      ? { top: '0px', left: '0px', width: '100vw', height: '100vh', borderRadius: '0px' }
+      : { top: 'calc(var(--safe-area-inset-top, 0px) + 16px)', left: '16px', width: '224px', height: '104px', borderRadius: '24px' }"
+    @click="!isDetailOpen && openDetail()"
+  >
       <!-- Animated Dynamic Weather Background -->
       <WeatherBackground
         v-if="weatherData"
@@ -33,7 +31,7 @@
           <!-- Wind Badge -->
           <span class="bg-white/10 backdrop-blur-sm py-0.5 px-2 rounded-full flex items-center gap-1 whitespace-nowrap">
             <Wind class="w-3 h-3 text-white/90" />
-            {{ windSpeed.toFixed(0) }} km/h
+            {{ windSpeed.toFixed(0) }} {{ WEATHER_UNITS.windSpeed }}
           </span>
           
           <!-- UV Badge -->
@@ -48,13 +46,13 @@
                 'text-purple-400': uv >= 11
               }" 
             />
-            {{ uv }} UV
+            {{ uv }} {{ WEATHER_UNITS.uvIndex }}
           </span>
           
           <!-- Humidity Badge -->
           <span class="bg-white/10 backdrop-blur-sm py-0.5 px-2 rounded-full flex items-center gap-1 whitespace-nowrap">
             <Droplet class="w-3 h-3 text-white/90" />
-            {{ humidity.toFixed(0) }}%
+            {{ humidity.toFixed(0) }}{{ WEATHER_UNITS.percent }}
           </span>
         </div>
 
@@ -103,66 +101,7 @@
         @close="closeDetail" 
         class="relative z-10"
       />
-    </div>
-  </template>
-
-  <!-- 2. SIMULATION PREVIEW MODE (renders all states stacked vertically for visual testing) -->
-  <template v-else>
-    <!-- Detailed Modal (displayed on top if a preview card is clicked) -->
-    <div 
-      v-if="isDetailOpen"
-      class="select-none weather-card overflow-hidden text-white fixed inset-0 w-screen h-screen rounded-none z-[100] cursor-default overflow-y-auto pb-safe"
-    >
-      <WeatherBackground
-        :weather-state="simulatedDetailState.state"
-        :is-day="simulatedDetailState.isDay"
-        :is-fixed="true"
-      />
-      <TiempoDetalleModal 
-        @close="closeDetail" 
-        class="relative z-10"
-        :simulated-state="simulatedDetailState.state"
-        :simulated-is-day="simulatedDetailState.isDay"
-      />
-    </div>
-
-    <!-- Stack of Preview Cards -->
-    <div 
-      v-else
-      v-for="(item, idx) in previewStates" 
-      :key="idx"
-      class="select-none weather-card overflow-hidden text-white fixed rounded-3xl w-56 h-26 cursor-pointer z-20 shadow-lg border border-white/10"
-      :style="{ top: `calc(var(--safe-area-inset-top, 0px) + 16px + ${idx * 110}px)`, left: '16px' }"
-      @click="openSimulatedDetail(item)"
-    >
-      <WeatherBackground
-        :weather-state="item.state"
-        :is-day="item.isDay"
-        :is-fixed="false"
-      />
-      
-      <div class="h-full w-full p-3 flex flex-col gap-1.5 justify-between relative z-10 text-shadow-md">
-        <!-- Top Row Badge -->
-        <div class="flex items-center gap-1 text-[10px] font-bold">
-          <span class="bg-black/20 backdrop-blur-sm py-0.5 px-2 rounded-full whitespace-nowrap">
-            {{ item.label }}
-          </span>
-        </div>
-
-        <!-- Bottom Row: Icon + Simulated Temperature -->
-        <div class="flex items-center gap-1 pl-1">
-          <img 
-            v-if="getWeatherIcon(item.code, item.isDay)"
-            :src="getWeatherIcon(item.code, item.isDay)" 
-            class="w-12 h-12 object-contain filter animate-float" 
-          />
-          <span class="text-3xl font-black leading-none">
-            {{ item.temp }}°
-          </span>
-        </div>
-      </div>
-    </div>
-  </template>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -178,24 +117,13 @@ const isDarkerBoxes = computed(() => {
   return isDay.value && (weatherState.value === 'cloudy' || weatherState.value === 'rainy')
 })
 
-const isItemDarkerBoxes = (item: { isDay: boolean; state: string }) => {
-  return item.isDay && (item.state === 'cloudy' || item.state === 'rainy')
-}
+// These compact meteorological symbols are locale-neutral domain units by design.
+const WEATHER_UNITS = {
+  windSpeed: 'km/h',
+  uvIndex: 'UV',
+  percent: '%'
+} as const
 
-// --- SIMULATION TOGGLE ---
-// Change to false to restore production behavior using actual live API weather data
-const simulationMode = ref(false)
-
-const previewStates = [
-  { label: 'Soleado (Día)', state: 'sunny' as const, isDay: true, temp: 28, code: 0 },
-  { label: 'Nublado (Día)', state: 'cloudy' as const, isDay: true, temp: 21, code: 3 },
-  { label: 'Lluvia (Día)', state: 'rainy' as const, isDay: true, temp: 17, code: 63 },
-  { label: 'Despejado (Noche)', state: 'sunny' as const, isDay: false, temp: 15, code: 0 },
-  { label: 'Nublado (Noche)', state: 'cloudy' as const, isDay: false, temp: 13, code: 3 },
-  { label: 'Lluvia (Noche)', state: 'rainy' as const, isDay: false, temp: 11, code: 63 }
-]
-
-const simulatedDetailState = ref<{ state: 'sunny' | 'cloudy' | 'rainy' | 'snowy'; isDay: boolean }>({ state: 'sunny', isDay: true })
 
 const {
   weatherData,
@@ -211,8 +139,7 @@ const {
   imgTiempo,
   weatherDescription,
   weatherState,
-  fetchWeather,
-  getWeatherIcon
+  fetchWeather
 } = useWeather()
 
 const formattedLastUpdate = computed(() => {
@@ -233,14 +160,6 @@ function openDetail() {
       showDetailsContent.value = true
     }, 430)
   }
-}
-
-function openSimulatedDetail(item: typeof previewStates[number]) {
-  simulatedDetailState.value = { state: item.state, isDay: item.isDay }
-  isDetailOpen.value = true
-  setTimeout(() => {
-    showDetailsContent.value = true
-  }, 430)
 }
 
 function closeDetail() {

@@ -119,3 +119,107 @@ This specification defines the requirements and behavior scenarios for preventin
 - **When** components access computed properties like `temperature` or `weatherState`.
 - **Then** the computed properties MUST NOT throw `TypeError: Cannot read properties of undefined` exceptions.
 - **And** they MUST return fallback values (e.g. `0` for temperature, `'sunny'` for weatherState) to prevent UI thread crashes.
+
+---
+
+## 3. Home Mini-Card Hardening Requirements
+
+### 3.1 Home Mini-Card Behavior Preservation
+
+The system MUST preserve the current home weather mini-card behavior while hardening its internals.
+
+#### Scenario: Mini-card visible content remains stable
+
+- **Given** valid live or cached weather data is available.
+- **When** the home page renders the weather mini-card.
+- **Then** the card MUST continue to show wind speed, UV index, humidity, weather icon, temperature, and status text.
+- **And** clicking the card MUST continue to open the detail modal.
+
+#### Scenario: Skeleton remains data-gated
+
+- **Given** no live or cached weather data is available.
+- **When** the mini-card is loading weather data.
+- **Then** the mini-card MAY show the existing skeleton loader instead of weather metrics.
+
+### 3.2 Cache-First Refresh Protection
+
+The system MUST preserve cache-first weather rendering during refresh and retry behavior.
+
+#### Scenario: Cached data survives refresh failure
+
+- **Given** cached weather data is already active.
+- **When** a background refresh fails or receives an invalid payload.
+- **Then** the UI MUST continue rendering the cached data.
+- **And** the retry loop MUST remain scheduled according to the existing weather refresh requirements.
+
+#### Scenario: Refresh does not replace content with skeleton
+
+- **Given** live or cached weather data is displayed.
+- **When** a focus, visibility, scheduled, or manual background refresh starts.
+- **Then** the card and modal MUST keep showing weather content.
+- **And** refreshing state MUST be represented only by the localized status indicator.
+
+### 3.3 Explicit Weather State Lifecycle
+
+The system MUST make weather state ownership, refresh timers, event listeners, and cleanup expectations explicit and contained.
+
+#### Scenario: Listener lifecycle is bounded
+
+- **Given** the weather feature registers browser focus or visibility listeners.
+- **When** the weather feature is mounted, reused, or disposed.
+- **Then** listener registration MUST avoid duplicate handlers.
+- **And** cleanup or intentional app-lifetime ownership MUST be documented.
+
+#### Scenario: Shared state contract is clear
+
+- **Given** multiple weather UI consumers read the weather composable state.
+- **When** one consumer triggers a refresh.
+- **Then** other consumers MUST observe the same active data, loading, error, refresh, and last-update state without conflicting ownership.
+
+### 3.4 Weather Labels and Units Consistency
+
+The system MUST align weather labels, status strings, and units with project i18n conventions, while allowing documented universal domain symbols.
+
+#### Scenario: Localized labels are used
+
+- **Given** weather UI renders user-facing words or phrases.
+- **When** the active locale is Spanish or English.
+- **Then** those words or phrases MUST come from matching `weather` locale keys.
+
+#### Scenario: Universal symbols are justified
+
+- **Given** the UI renders compact symbols such as `%`, `UV`, `km/h`, `mm`, or `°C`.
+- **When** the symbol is kept outside locale files.
+- **Then** the spec, design, or nearby documentation MUST justify it as a locale-neutral domain symbol.
+
+### 3.5 Production-Safe Preview Behavior
+
+The system MUST NOT keep uncontained simulation or preview-only behavior in the production weather rendering path.
+
+#### Scenario: Production path excludes simulation controls
+
+- **Given** the production home mini-card is rendered.
+- **When** weather data is displayed.
+- **Then** preview-only simulation state, labels, controls, or fixture toggles MUST NOT be reachable by users.
+
+#### Scenario: Developer preview remains isolated if retained
+
+- **Given** developer preview behavior is still needed.
+- **When** it is implemented.
+- **Then** it MUST be isolated behind a non-production path, fixture, or documented development-only entry point.
+
+### 3.6 Weather Architecture Documentation
+
+The system MUST maintain concise documentation of the weather mini-card architecture and data flow.
+
+#### Scenario: Future agent can trace data flow
+
+- **Given** a future maintainer reviews the weather artifacts.
+- **When** they need to modify the mini-card, modal, background, or composable.
+- **Then** documentation MUST identify each component responsibility, data source, cache keys, refresh/retry behavior, and i18n ownership.
+
+#### Scenario: Documentation matches preserved behavior
+
+- **Given** the implementation is hardened without product redesign.
+- **When** documentation is updated.
+- **Then** it MUST describe the current visible behavior and any intentional non-behavioral internal changes.

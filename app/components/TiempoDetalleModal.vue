@@ -125,7 +125,7 @@
                   <!-- Wind Speed -->
                   <span class="text-[9px] lg:text-xs opacity-75 mt-0.5 whitespace-nowrap flex items-center gap-0.5">
                     <Wind class="size-2 lg:size-3" />
-                    {{ item.windSpeed.toFixed(0) }} <span class="text-[7px] lg:text-xs">km/h</span>
+                    {{ item.windSpeed.toFixed(0) }} <span class="text-[7px] lg:text-xs">{{ WEATHER_UNITS.windSpeed }}</span>
                   </span>
                 </div>
               </div>
@@ -150,7 +150,7 @@
               </span>
             </div>
             <div class="-mt-2 pt-2 block text-[8px] lg:text-xs text-white/75">
-              Max: {{ weatherData?.daily?.uv_index_max?.[0]?.toFixed(2) ?? '' }}
+              {{ t('weather.uv_max') }}: {{ weatherData?.daily?.uv_index_max?.[0]?.toFixed(2) ?? '' }}
             </div>
           </div>
 
@@ -162,7 +162,7 @@
             </span>
             <div class="mt-3 flex items-baseline gap-1">
               <span class="text-2xl lg:text-3xl font-black">{{ windSpeed.toFixed(1) }}</span>
-              <span class="text-xs font-semibold text-white/85">km/h</span>
+              <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.windSpeed }}</span>
             </div>
             <div class="-mt-2 pt-2 flex items-center justify-between text-xs text-white/80">
               <span class="font-mono text-[8px] lg:text-xs">{{ t('weather.wind_direction') }}: {{ weatherData?.current?.wind_direction_10m ?? 0 }}°{{ getWindDirectionCardinal(weatherData?.current?.wind_direction_10m ?? 0) }}</span>
@@ -181,7 +181,7 @@
             </span>
             <div class="mt-3 flex items-baseline gap-0.5">
               <span class="text-2xl lg:text-3xl font-black">{{ weatherData?.current?.precipitation?.toFixed(1) ?? '0.0' }}</span>
-              <span class="text-xs font-semibold text-white/85">mm</span>
+              <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.precipitation }}</span>
             </div>
           </div>
 
@@ -193,7 +193,7 @@
             </span>
             <div class="mt-3 flex items-baseline gap-0.5">
               <span class="text-2xl lg:text-3xl font-black">{{ humidity.toFixed(0) }}</span>
-              <span class="text-xs font-semibold text-white/85">%</span>
+              <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.percent }}</span>
             </div>
           </div>
 
@@ -258,7 +258,7 @@
         </section>
 
         <span class="text-[10px] text-white/70 mt-2 font-mono uppercase tracking-widest text-center">
-          {{ t('last_update_label') }} {{ weatherData?.current?.time ? weatherData.current.time.slice(11, 16) : '' }}
+          {{ t('weather.last_update_label') }} {{ weatherData?.current?.time ? weatherData.current.time.slice(11, 16) : '' }}
         </span>
 
       </div>
@@ -278,8 +278,7 @@ import {
   Sunset,
   CloudRain,
   ArrowUp,
-  MapPin,
-  Clock
+  MapPin
 } from '@lucide/vue'
 
 const emit = defineEmits(['close'])
@@ -298,11 +297,6 @@ onMounted(() => {
     scrollToCurrentHour()
   })
 })
-
-const props = defineProps<{
-  simulatedState?: 'sunny' | 'cloudy' | 'rainy' | 'snowy'
-  simulatedIsDay?: boolean
-}>()
 
 const {
   weatherData,
@@ -323,6 +317,13 @@ const {
 
 const { t } = useI18n()
 
+// These compact meteorological symbols are locale-neutral domain units by design.
+const WEATHER_UNITS = {
+  windSpeed: 'km/h',
+  precipitation: 'mm',
+  percent: '%'
+} as const
+
 const formattedLastUpdate = computed(() => {
   if (!lastUpdate.value) return ''
   const date = new Date(lastUpdate.value)
@@ -332,18 +333,11 @@ const formattedLastUpdate = computed(() => {
 })
 
 const isDarkerBoxes = computed(() => {
-  const isDayVal = props.simulatedIsDay !== undefined ? props.simulatedIsDay : isDay.value
-  const stateVal = props.simulatedState !== undefined ? props.simulatedState : weatherState.value
-  return isDayVal && (stateVal === 'cloudy' || stateVal === 'rainy')
+  return isDay.value && (weatherState.value === 'cloudy' || weatherState.value === 'rainy')
 })
 
 // Formatting helpers
 function formatHour(timeStr: string | undefined) {
-  if (!timeStr) return ''
-  return timeStr.substring(11, 16)
-}
-
-function formatSunriseSunset(timeStr: string | undefined) {
   if (!timeStr) return ''
   return timeStr.substring(11, 16)
 }
