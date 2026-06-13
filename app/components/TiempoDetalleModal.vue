@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="weatherData"
+    v-if="displayWeatherData"
     class="w-full flex flex-col select-none relative text-white"
     :class="{ 'theme-darker-boxes': isDarkerBoxes }"
     @click.stop
@@ -28,7 +28,7 @@
         <header class="flex items-center justify-between pt-4 stagger-item stagger-header">
           <div class="flex items-center gap-2">
             <MapPin class="w-4 h-4 text-white/90" />
-            <span class="text-sm font-extrabold tracking-wide uppercase">{{ t('weather.details_title') }}</span>
+            <span class="text-sm font-extrabold tracking-wide uppercase">{{ title }}</span>
           </div>
           <!-- Spacer to maintain layout balance -->
           <div class="w-9 h-9"></div>
@@ -150,7 +150,7 @@
               </span>
             </div>
             <div class="-mt-2 pt-2 block text-[8px] lg:text-xs text-white/75">
-              {{ t('weather.uv_max') }}: {{ weatherData?.daily?.uv_index_max?.[0]?.toFixed(2) ?? '' }}
+              {{ t('weather.uv_max') }}: {{ displayWeatherData?.daily?.uv_index_max?.[0]?.toFixed(2) ?? '' }}
             </div>
           </div>
 
@@ -165,10 +165,10 @@
               <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.windSpeed }}</span>
             </div>
             <div class="-mt-2 pt-2 flex items-center justify-between text-xs text-white/80">
-              <span class="font-mono text-[8px] lg:text-xs">{{ t('weather.wind_direction') }}: {{ weatherData?.current?.wind_direction_10m ?? 0 }}°{{ getWindDirectionCardinal(weatherData?.current?.wind_direction_10m ?? 0) }}</span>
+              <span class="font-mono text-[8px] lg:text-xs">{{ t('weather.wind_direction') }}: {{ displayWeatherData?.current?.wind_direction_10m ?? 0 }}°{{ getWindDirectionCardinal(displayWeatherData?.current?.wind_direction_10m ?? 0) }}</span>
               <ArrowUp 
                 class="w-3.5 h-3.5 text-white stroke-[3] transition-transform duration-500" 
-                :style="{ transform: `rotate(${weatherData?.current?.wind_direction_10m ?? 0}deg)` }"
+                :style="{ transform: `rotate(${displayWeatherData?.current?.wind_direction_10m ?? 0}deg)` }"
               />
             </div>
           </div>
@@ -180,7 +180,7 @@
               {{ t('weather.precipitation') }}
             </span>
             <div class="mt-3 flex items-baseline gap-0.5">
-              <span class="text-2xl lg:text-3xl font-black">{{ weatherData?.current?.precipitation?.toFixed(1) ?? '0.0' }}</span>
+              <span class="text-2xl lg:text-3xl font-black">{{ displayWeatherData?.current?.precipitation?.toFixed(1) ?? '0.0' }}</span>
               <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.precipitation }}</span>
             </div>
           </div>
@@ -243,13 +243,13 @@
                 <Sunrise class="w-5 h-5 text-amber-400 stroke-[2.2]" />
                 <div class="flex flex-col text-left">
                   <span class="text-[9px] font-bold text-white/50 uppercase tracking-widest leading-none">{{ t('weather.sunrise') }}</span>
-                  <span class="font-extrabold tracking-tight mt-0.5">{{ formatToAmPm(weatherData?.daily?.sunrise?.[0]) }}</span>
+                  <span class="font-extrabold tracking-tight mt-0.5">{{ formatToAmPm(displayWeatherData?.daily?.sunrise?.[0]) }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-1.5 text-right">
                 <div class="flex flex-col items-end text-right">
                   <span class="text-[9px] font-bold text-white/50 uppercase tracking-widest leading-none">{{ t('weather.sunset') }}</span>
-                  <span class="font-extrabold tracking-tight mt-0.5">{{ formatToAmPm(weatherData?.daily?.sunset?.[0]) }}</span>
+                  <span class="font-extrabold tracking-tight mt-0.5">{{ formatToAmPm(displayWeatherData?.daily?.sunset?.[0]) }}</span>
                 </div>
                 <Sunset class="w-5 h-5 text-amber-500 stroke-[2.2]" />
               </div>
@@ -258,7 +258,7 @@
         </section>
 
         <span class="text-[10px] text-white/70 mt-2 font-mono uppercase tracking-widest text-center">
-          {{ t('weather.last_update_label') }} {{ weatherData?.current?.time ? weatherData.current.time.slice(11, 16) : '' }}
+          {{ t('weather.last_update_label') }} {{ displayWeatherData?.current?.time ? displayWeatherData.current.time.slice(11, 16) : '' }}
         </span>
 
       </div>
@@ -269,6 +269,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from '#imports'
 import { useWeather } from '~/composables/useWeather'
+import type { BeachWeatherItem } from '~/types/beachWeather'
 import {
   X,
   Wind,
@@ -283,10 +284,15 @@ import {
 
 const emit = defineEmits(['close'])
 
+const props = defineProps<{
+  weatherData?: BeachWeatherItem
+  title?: string
+}>()
+
 const scrollContainer = ref<HTMLElement | null>(null)
 
 const scrollToCurrentHour = () => {
-  const currentTimeStr = weatherData.value?.current?.time
+  const currentTimeStr = displayWeatherData.value?.current?.time
   if (!scrollContainer.value || !currentTimeStr) return
   const currentHour = new Date(currentTimeStr).getHours()
   scrollContainer.value.scrollLeft = currentHour * 70
@@ -299,23 +305,70 @@ onMounted(() => {
 })
 
 const {
-  weatherData,
+  weatherData: generalWeatherData,
   isRefreshing,
   isError,
   lastUpdate,
-  isDay,
-  temperature,
-  windSpeed,
-  humidity,
-  uv,
-  imgTiempo,
-  weatherDescription,
-  weatherState,
   getWeatherIcon,
   getWeatherDescription
 } = useWeather()
 
 const { t } = useI18n()
+
+const title = computed(() => props.title || t('weather.details_title'))
+
+const displayWeatherData = computed(() => props.weatherData ?? generalWeatherData.value)
+
+const isDay = computed(() => {
+  return displayWeatherData.value?.current?.is_day === 1
+})
+
+const temperature = computed(() => {
+  return displayWeatherData.value?.current?.temperature_2m ?? 0
+})
+
+const windSpeed = computed(() => {
+  return displayWeatherData.value?.current?.wind_speed_10m ?? 0
+})
+
+const humidity = computed(() => {
+  return displayWeatherData.value?.current?.relative_humidity_2m ?? 0
+})
+
+const uv = computed(() => {
+  const currentHour = displayWeatherData.value?.current?.time?.slice(0, 13)
+  const hourly = displayWeatherData.value?.hourly
+  const hourlyIndex = currentHour && hourly?.time
+    ? hourly.time.findIndex((time) => time.slice(0, 13) === currentHour)
+    : -1
+  const val = hourlyIndex >= 0
+    ? hourly?.uv_index?.[hourlyIndex]
+    : displayWeatherData.value?.daily?.uv_index_max?.[0]
+  return val !== undefined && typeof val === 'number' ? Math.round(val) : 0
+})
+
+const imgTiempo = computed(() => {
+  const code = displayWeatherData.value?.current?.weather_code
+  if (code === undefined || code === null) return null
+  return getWeatherIcon(code, isDay.value)
+})
+
+const weatherDescription = computed(() => {
+  const code = displayWeatherData.value?.current?.weather_code
+  if (code === undefined || code === null) return ''
+  return getWeatherDescription(code, isDay.value)
+})
+
+const weatherState = computed(() => {
+  const code = displayWeatherData.value?.current?.weather_code
+  if (code === undefined || code === null) return 'sunny'
+
+  if (code === 0 || code === 1) return 'sunny'
+  if (code === 2 || code === 3 || code === 45 || code === 48) return 'cloudy'
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99)) return 'rainy'
+  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'snowy'
+  return 'sunny'
+})
 
 // These compact meteorological symbols are locale-neutral domain units by design.
 const WEATHER_UNITS = {
@@ -356,9 +409,9 @@ function formatToAmPm(timeStr: string | undefined) {
 }
 
 const sunPosition = computed(() => {
-  const sunriseStr = weatherData.value?.daily?.sunrise?.[0]
-  const sunsetStr = weatherData.value?.daily?.sunset?.[0]
-  const currentTimeStr = weatherData.value?.current?.time
+  const sunriseStr = displayWeatherData.value?.daily?.sunrise?.[0]
+  const sunsetStr = displayWeatherData.value?.daily?.sunset?.[0]
+  const currentTimeStr = displayWeatherData.value?.current?.time
 
   if (!sunriseStr || !sunsetStr || !currentTimeStr) {
     return { x: 40, y: 95, active: false, angleDeg: 180 }
@@ -421,8 +474,8 @@ function getWindDirectionCardinal(degrees: number) {
 
 // 24-hour predictions format
 const hourlyForecast = computed(() => {
-  if (!weatherData.value?.hourly) return []
-  const h = weatherData.value.hourly
+  if (!displayWeatherData.value?.hourly) return []
+  const h = displayWeatherData.value.hourly
   return h.time.map((time, idx) => ({
     time,
     temp: h.temperature_2m?.[idx] ?? 0,
@@ -474,7 +527,7 @@ const chartPoints = computed(() => {
 })
 
 const currentHourIndex = computed(() => {
-  const currentTimeStr = weatherData.value?.current?.time
+  const currentTimeStr = displayWeatherData.value?.current?.time
   if (!currentTimeStr) return -1
   return new Date(currentTimeStr).getHours()
 })

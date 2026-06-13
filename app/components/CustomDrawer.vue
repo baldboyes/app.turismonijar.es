@@ -1,71 +1,65 @@
 <template>
-  <div 
+  <div
     :style="drawerStyle"
     :class="[
-      'fixed left-0 right-0 mx-auto bg-white flex flex-col drawer-container',
+      'fixed left-0 right-0 mx-auto flex flex-col overflow-hidden bg-white/95 shadow-[0_-18px_55px_rgb(15,23,42,0.18)] backdrop-blur-xl drawer-container',
       !isDragging ? 'transition-[max-width,border-radius] duration-350 ease-out' : '',
       state === 'full' 
-        ? 'max-w-none rounded-t-2xl md:rounded-t-none border-t border-gray-100 md:border-t-0 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] md:shadow-none' 
-        : 'max-w-[1024px] rounded-t-2xl border-t border-gray-100 shadow-[0_-8px_30px_rgb(0,0,0,0.12)]'
+        ? 'max-w-none rounded-t-[28px] md:rounded-t-none border-t border-white/70 md:border-t-0 md:shadow-none'
+        : 'max-w-[1024px] rounded-t-[28px] border border-b-0 border-white/70 ring-1 ring-slate-900/5'
     ]"
   >
-    <!-- Handle de arrastre -->
-    <div 
+    <div
       @touchstart="onTouchStart"
       @touchmove="onTouchMove"
       @touchend="onTouchEnd"
       @mousedown="onMouseDown"
-      class="w-full py-3 flex justify-center cursor-grab active:cursor-grabbing select-none shrink-0"
+      class="group w-full px-5 pt-3 pb-2 flex justify-center cursor-grab active:cursor-grabbing select-none shrink-0"
     >
-      <div class="w-12 h-1 bg-gray-300 rounded-full" />
+      <div class="h-1.5 w-14 rounded-full bg-slate-300 shadow-inner transition-colors group-hover:bg-emerald-500/80" />
     </div>
 
-    <!-- Cabecera -->
-    <div 
+    <div
       @touchstart="onTouchStart"
       @touchmove="onTouchMove"
       @touchend="onTouchEnd"
       @mousedown="onMouseDown"
-      class="px-4 pb-3 border-b border-gray-100 flex items-center justify-between relative select-none shrink-0"
+      class="px-4 pb-4 border-b border-slate-100/80 flex items-center gap-3 relative select-none shrink-0"
     >
-      <!-- Botón para colapsar (solo visible en full o mid) -->
-      <Button 
+      <Button
         v-if="state === 'full' || state === 'mid'"
         variant="ghost"
         size="icon"
+        :aria-label="$t('drawer.collapse')"
         @click="onCollapseClick"
         @touchstart.stop
         @mousedown.stop
-        class="size-10 text-gray-500 hover:text-emerald-600 hover:bg-gray-100 rounded-full transition-all"
+        class="size-10 rounded-full text-slate-500 transition-colors hover:bg-transparent hover:text-emerald-700"
       >
         <ChevronDown class="size-5" />
       </Button>
-      <div v-if="state === 'peek'" class="w-8 h-8 flex-shrink-0"></div> <!-- Espaciador para centrar título -->
 
-      <div class="flex flex-col items-center select-none text-center min-w-0 flex-1 mx-2">
-        <div class="flex items-center gap-2 justify-center flex-wrap">
-          <span class="text-[11px] font-extrabold text-gray-600 truncate">
+      <div class="min-w-0 flex-1 select-none text-left">
+        <div class="flex max-w-full items-center gap-2 overflow-hidden">
+          <span class="min-w-0 truncate text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
             <template v-if="lastModified && lastModified.length >= 12">
               {{ $t('last_update_label') }} 
             </template>
             {{ formattedDate }}
           </span>
-          <span 
+          <span
             v-if="lastModified && lastModified.length >= 12"
-            class="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full text-white shadow-sm shrink-0"
-            :class="isProvisional ? 'bg-amber-500' : 'bg-emerald-600'"
+            class="shrink-0 text-[9px] font-extrabold uppercase tracking-wider"
+            :class="isProvisional ? 'text-amber-700' : 'text-emerald-700'"
           >
             {{ isProvisional ? $t('provisional') : $t('definitivo') }}
           </span>
         </div>
       </div>
-      
-      <div class="w-8 h-8 flex-shrink-0"></div> <!-- Espaciador para centrar título -->
     </div>
 
-    <!-- Contenido deslizable -->
-    <div 
-      class="flex-1 overflow-y-auto p-5 pb-24"
+    <div
+      class="flex-1 overflow-y-auto bg-gradient-to-b from-white via-white to-slate-50/80 px-4 pt-4 pb-24 sm:px-5"
       :class="{ 'pointer-events-none': isDragging }"
       :style="{ maxHeight: scrollMaxHeight }"
     >
@@ -195,7 +189,6 @@ let touchStartTime = 0
 
 // GESTIÓN TÁCTIL (MÓVIL)
 function onTouchStart(e: TouchEvent) {
-  console.log('onTouchStart', e.touches[0].clientY)
   touchStartTime = Date.now()
   startTouchY = e.touches[0].clientY
   startTranslateY = translateY.value
@@ -221,7 +214,6 @@ function onTouchEnd() {
   
   const duration = Date.now() - touchStartTime
   const deltaY = translateY.value - startTranslateY
-  console.log('onTouchEnd', { duration, deltaY })
   
   if (duration < 350 && Math.abs(deltaY) < 25) {
     toggleState()
@@ -232,7 +224,6 @@ function onTouchEnd() {
 
 // GESTIÓN RATÓN (ESCRITORIO)
 function onMouseDown(e: MouseEvent) {
-  console.log('onMouseDown', { button: e.button, isDragging: isDragging.value })
   if (e.button !== 0 || isDragging.value) return // Solo click izquierdo
   
   // Prevent browser default text selection/dragging to ensure mouseup fires cleanly
@@ -273,7 +264,6 @@ function onMouseUp(e: MouseEvent) {
   
   const duration = Date.now() - touchStartTime
   const deltaY = translateY.value - startTranslateY
-  console.log('onMouseUp', { duration, deltaY })
   
   if (duration < 350 && Math.abs(deltaY) < 25) {
     toggleState()
@@ -283,7 +273,6 @@ function onMouseUp(e: MouseEvent) {
 }
 
 function toggleState() {
-  console.log('toggleState called', { state: state.value, translateY: translateY.value })
   if (state.value === 'peek') {
     setState('mid')
   } else if (state.value === 'mid') {

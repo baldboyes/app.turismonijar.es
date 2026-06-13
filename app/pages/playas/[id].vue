@@ -75,6 +75,47 @@
           </div>
         </div>
 
+        <!-- Beach Weather Summary -->
+        <div v-if="beachWeather" class="bg-white rounded-3xl p-4 lg:p-6 space-y-4">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="!text-sm font-extrabold uppercase tracking-wider text-gray-600 !m-0">
+              {{ $t('weather.beach_summary') }}
+            </h3>
+            <button
+              type="button"
+              class="rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 transition-colors hover:bg-emerald-50"
+              :aria-label="$t('weather.open_beach_details', { beach: beach.title })"
+              @click="isWeatherModalOpen = true"
+            >
+              {{ $t('weather.details') }}
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="rounded-2xl bg-orange-50 p-3 text-orange-700">
+              <Thermometer class="size-4 mb-1" />
+              <span class="block text-[10px] font-bold uppercase tracking-wider text-orange-700/70">{{ $t('weather.temperature') }}</span>
+              <span class="text-lg font-black">{{ beachWeather.current.temperature_2m.toFixed(0) }}°</span>
+            </div>
+            <div class="rounded-2xl bg-sky-50 p-3 text-sky-700">
+              <Wind class="size-4 mb-1" />
+              <span class="block text-[10px] font-bold uppercase tracking-wider text-sky-700/70">{{ $t('weather.wind') }}</span>
+              <span class="text-lg font-black">{{ beachWeather.current.wind_speed_10m.toFixed(0) }}</span>
+              <span class="text-[10px] font-bold"> km/h</span>
+            </div>
+            <div class="rounded-2xl bg-cyan-50 p-3 text-cyan-700">
+              <Waves class="size-4 mb-1" />
+              <span class="block text-[10px] font-bold uppercase tracking-wider text-cyan-700/70">{{ $t('weather.sea') }}</span>
+              <span class="text-lg font-black">{{ beachWeather.sea_surface_temperature.toFixed(0) }}°</span>
+            </div>
+            <div class="rounded-2xl p-3" :class="beachWeatherUvClass">
+              <Sun class="size-4 mb-1" />
+              <span class="block text-[10px] font-bold uppercase tracking-wider opacity-70">{{ $t('weather.uv_index') }}</span>
+              <span class="text-lg font-black">{{ beachWeatherUv }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Description Section -->
         <div v-if="beach.description" class="bg-white rounded-3xl p-4 lg:p-6 space-y-2">
           <h3 class="!text-sm font-extrabold uppercase tracking-wider text-gray-600 !m-0">
@@ -211,21 +252,45 @@
       </div>
     </ion-content>
 
+    <Teleport to="body">
+      <div
+        v-if="isWeatherModalOpen && beachWeather"
+        class="fixed inset-0 z-[100] h-screen w-screen overflow-y-auto text-white"
+        @click="isWeatherModalOpen = false"
+      >
+        <WeatherBackground
+          :weather-state="beachWeatherState"
+          :is-day="beachWeather.current.is_day === 1"
+          :is-fixed="true"
+        />
+        <TiempoDetalleModal
+          :weather-data="beachWeather"
+          :title="beachWeather.nombre"
+          class="relative z-10"
+          @close="isWeatherModalOpen = false"
+        />
+      </div>
+    </Teleport>
+
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { IonPage, IonContent } from '@ionic/vue'
-import { ChevronLeft, Waves, AlertCircle, MapPin, Ruler, Expand, Accessibility, Info, Phone, Umbrella, AlertTriangle } from '@lucide/vue'
+import { ChevronLeft, Waves, AlertCircle, MapPin, Ruler, Expand, Accessibility, Info, Phone, Umbrella, AlertTriangle, Thermometer, Wind, Sun } from '@lucide/vue'
 import { useRoute, useRouter, useLocalePath, useSeoMeta, useI18n } from '#imports'
 import { useBeachesDetailed } from '~/composables/useBeachesDetailed'
+import { useBeachWeather } from '~/composables/useBeachWeather'
+import type { WeatherState } from '~/composables/useWeather'
 import BeachDetailMap from '@/components/BeachDetailMap.vue'
+import TiempoDetalleModal from '@/components/TiempoDetalleModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
 const { t } = useI18n()
+const isWeatherModalOpen = ref(false)
 
 const {
   beachesDetailed,
@@ -234,8 +299,48 @@ const {
   fetchDetailedBeaches
 } = useBeachesDetailed()
 
+const { fetchBeachWeather, getBeachWeather } = useBeachWeather()
+
 const beach = computed(() => {
   return beachesDetailed.value.find(b => String(b.id) === String(route.params.id))
+})
+
+const beachWeather = computed(() => {
+  return beach.value ? getBeachWeather(beach.value.id) : undefined
+})
+
+const beachWeatherUv = computed(() => {
+  const weather = beachWeather.value
+  if (!weather) return 0
+
+  const currentHour = weather.current.time?.slice(0, 13)
+  const hourlyIndex = currentHour
+    ? weather.hourly.time.findIndex((time) => time.slice(0, 13) === currentHour)
+    : -1
+  const value = hourlyIndex >= 0
+    ? weather.hourly.uv_index?.[hourlyIndex]
+    : weather.daily.uv_index_max?.[0]
+  return typeof value === 'number' ? Math.round(value) : 0
+})
+
+const beachWeatherUvClass = computed(() => {
+  const value = beachWeatherUv.value
+  if (value <= 2) return 'bg-emerald-50 text-emerald-700'
+  if (value <= 5) return 'bg-yellow-50 text-yellow-700'
+  if (value <= 7) return 'bg-amber-50 text-amber-700'
+  if (value <= 10) return 'bg-red-50 text-red-700'
+  return 'bg-purple-50 text-purple-700'
+})
+
+const beachWeatherState = computed<WeatherState>(() => {
+  const code = beachWeather.value?.current.weather_code
+  if (code === undefined || code === null) return 'sunny'
+
+  if (code === 0 || code === 1) return 'sunny'
+  if (code === 2 || code === 3 || code === 45 || code === 48) return 'cloudy'
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99)) return 'rainy'
+  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'snowy'
+  return 'sunny'
 })
 
 const parsedCharacteristics = computed(() => {
@@ -269,9 +374,10 @@ function goBack() {
 }
 
 onMounted(async () => {
-  if (beachesDetailed.value.length === 0) {
-    await fetchDetailedBeaches()
-  }
+  await Promise.all([
+    beachesDetailed.value.length === 0 ? fetchDetailedBeaches() : Promise.resolve(),
+    fetchBeachWeather()
+  ])
 })
 
 useSeoMeta({

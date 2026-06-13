@@ -49,6 +49,7 @@
     "retry": "Reintentar"
   },
   "drawer": {
+    "collapse": "Contraer panel",
     "explore_fallback": "Explorar Níjar"
   },
   "map": {
@@ -100,8 +101,11 @@
     "light_thunderstorms_hail": "Tormentas Eléctricas Ligeras con Granizo",
     "thunderstorm_hail": "Tormenta con Granizo",
     "details_title": "El tiempo en Níjar",
+    "beach_summary": "Tiempo en la playa",
     "hourly_forecast": "Predicción por horas",
+    "temperature": "Temperatura",
     "wind": "Viento",
+    "sea": "Mar",
     "humidity": "Humedad",
     "uv_index": "Índice UV",
     "precipitation": "Precipitación",
@@ -110,6 +114,8 @@
     "elevation": "Altitud",
     "wind_direction": "Dirección",
     "close": "Cerrar",
+    "details": "Detalle",
+    "open_beach_details": "Ver tiempo de {beach}",
     "timezone": "Zona horaria",
     "latitude": "Latitud",
     "longitude": "Longitud",

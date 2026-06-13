@@ -49,6 +49,7 @@
     "retry": "Retry"
   },
   "drawer": {
+    "collapse": "Collapse panel",
     "explore_fallback": "Explore Níjar"
   },
   "map": {
@@ -100,8 +101,11 @@
     "light_thunderstorms_hail": "Light Thunderstorms with Hail",
     "thunderstorm_hail": "Thunderstorm with Hail",
     "details_title": "Weather in Níjar",
+    "beach_summary": "Beach weather",
     "hourly_forecast": "Hourly Forecast",
+    "temperature": "Temperature",
     "wind": "Wind",
+    "sea": "Sea",
     "humidity": "Humidity",
     "uv_index": "UV Index",
     "precipitation": "Precipitation",
@@ -110,6 +114,8 @@
     "elevation": "Elevation",
     "wind_direction": "Wind Direction",
     "close": "Close",
+    "details": "Details",
+    "open_beach_details": "View weather for {beach}",
     "timezone": "Timezone",
     "latitude": "Latitude",
     "longitude": "Longitude",
