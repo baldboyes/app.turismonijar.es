@@ -111,3 +111,4 @@ To generate the app icons and splash screens for iOS and Android, we use `@capac
    npm run assets
    ```
    *(This runs `capacitor-assets generate` to update native Android and iOS folders).*
+
