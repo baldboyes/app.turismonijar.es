@@ -14,7 +14,7 @@
   >
       <!-- Animated Dynamic Weather Background -->
       <WeatherBackground
-        v-if="weatherData"
+        v-if="aggregateWeatherData"
         :weather-state="weatherState"
         :is-day="isDay"
         :is-fixed="showDetailsContent"
@@ -22,7 +22,7 @@
 
       <!-- Loaded Summary Card Content (visible when closed) -->
       <div 
-        v-if="weatherData" 
+        v-if="aggregateWeatherData" 
         class="h-full w-full p-3 flex flex-col gap-1.5 justify-between transition-opacity duration-300"
         :class="isDetailOpen ? 'opacity-0 pointer-events-none absolute top-0 left-0 w-56 h-26' : 'opacity-100 relative z-10'"
       >
@@ -58,15 +58,24 @@
 
         <!-- Bottom Row: Icon + Temperature & Condition -->
         <div>
-          <div class="flex items-center gap-0 text-shadow-md">
-            <img 
-              v-if="imgTiempo"
-              :src="imgTiempo" 
-              :alt="weatherDescription" 
-              class="w-14 h-14 object-contain filter animate-float" 
-            />
-            <span class="text-4xl font-extrabold tracking-tight leading-none">
-              {{ temperature.toFixed(0) }}°
+          <div class="flex items-center justify-between gap-2 text-shadow-md">
+            <div class="flex items-center gap-0">
+              <img 
+                v-if="imgTiempo"
+                :src="imgTiempo" 
+                :alt="weatherDescription" 
+                class="w-14 h-14 object-contain filter animate-float" 
+              />
+              <span class="text-4xl font-extrabold tracking-tight leading-none">
+                {{ temperature.toFixed(0) }}°
+              </span>
+            </div>
+            <span
+              v-if="seaTemperature !== null"
+              class="bg-white/10 backdrop-blur-sm py-1 px-2 rounded-2xl flex items-center gap-1 text-sm font-bold whitespace-nowrap"
+            >
+              <Waves class="w-4 h-4 text-white/90" />
+              {{ seaTemperature.toFixed(0) }}°
             </span>
           </div>
           <div class="text-xs opacity-80 mt-1 text-shadow-sm select-none">
@@ -78,7 +87,7 @@
 
       <!-- Loading Skeleton State (visible when closed and loading) -->
       <div 
-        v-else-if="isLoading || !weatherData" 
+        v-else-if="isLoading || !aggregateWeatherData" 
         class="h-full w-full p-3 bg-gradient-to-br from-slate-100 to-slate-200 animate-pulse flex flex-col justify-between relative z-10"
       >
         <div class="flex items-center gap-1.5">
@@ -98,6 +107,10 @@
       <!-- Detailed Content (visible when open) -->
       <TiempoDetalleModal 
         v-if="showDetailsContent" 
+        :weather-data="aggregateWeatherData ?? undefined"
+        :is-refreshing="isRefreshing"
+        :is-error="isError"
+        :last-update="lastUpdate"
         @close="closeDetail" 
         class="relative z-10"
       />
@@ -106,8 +119,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Wind, Circle, Droplet } from '@lucide/vue'
-import { useWeather } from '~/composables/useWeather'
+import { Wind, Circle, Droplet, Waves } from '@lucide/vue'
+import { useBeachWeather } from '~/composables/useBeachWeather'
+import {
+  getWeatherDescriptionKeyFromCode,
+  getWeatherIconFromCode,
+  useBeachWeatherAggregate
+} from '~/composables/useBeachWeatherAggregate'
 import { useI18n } from '#imports'
 import TiempoDetalleModal from './TiempoDetalleModal.vue'
 
@@ -124,23 +142,42 @@ const WEATHER_UNITS = {
   percent: '%'
 } as const
 
-
 const {
-  weatherData,
+  beachesWeather,
   isLoading,
   isRefreshing,
   isError,
   lastUpdate,
-  isDay,
-  temperature,
-  windSpeed,
-  humidity,
-  uv,
-  imgTiempo,
-  weatherDescription,
-  weatherState,
-  fetchWeather
-} = useWeather()
+  fetchBeachWeather
+} = useBeachWeather()
+
+const beachWeatherItems = computed(() => Object.values(beachesWeather.value))
+const { aggregateWeatherData, aggregateWeatherCode, aggregateWeatherState } = useBeachWeatherAggregate(() => beachWeatherItems.value)
+
+const isDay = computed(() => aggregateWeatherData.value?.current?.is_day === 1)
+const temperature = computed(() => aggregateWeatherData.value?.current?.temperature_2m ?? 0)
+const windSpeed = computed(() => aggregateWeatherData.value?.current?.wind_speed_10m ?? 0)
+const humidity = computed(() => aggregateWeatherData.value?.current?.relative_humidity_2m ?? 0)
+const seaTemperature = computed(() => {
+  const value = aggregateWeatherData.value?.sea_surface_temperature ?? 0
+  return value > 0 ? value : null
+})
+const uv = computed(() => {
+  const currentHour = aggregateWeatherData.value?.current?.time?.slice(0, 13)
+  const hourly = aggregateWeatherData.value?.hourly
+  const hourlyIndex = currentHour && hourly?.time
+    ? hourly.time.findIndex((time) => time.slice(0, 13) === currentHour)
+    : -1
+  const value = hourlyIndex >= 0
+    ? hourly?.uv_index?.[hourlyIndex]
+    : aggregateWeatherData.value?.daily?.uv_index_max?.[0]
+  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : 0
+})
+const weatherState = aggregateWeatherState
+const imgTiempo = computed(() => getWeatherIconFromCode(aggregateWeatherCode.value, isDay.value))
+const weatherDescription = computed(() => {
+  return t(getWeatherDescriptionKeyFromCode(aggregateWeatherCode.value))
+})
 
 const formattedLastUpdate = computed(() => {
   if (!lastUpdate.value) return ''
@@ -154,7 +191,7 @@ const isDetailOpen = ref(false)
 const showDetailsContent = ref(false)
 
 function openDetail() {
-  if (!isLoading.value && weatherData.value) {
+  if (!isLoading.value && aggregateWeatherData.value) {
     isDetailOpen.value = true
     setTimeout(() => {
       showDetailsContent.value = true
@@ -168,7 +205,7 @@ function closeDetail() {
 }
 
 onMounted(async () => {
-  await fetchWeather()
+  await fetchBeachWeather()
 })
 </script>
 

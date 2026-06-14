@@ -26,9 +26,14 @@
         
         <!-- Header -->
         <header class="flex items-center justify-between pt-4 stagger-item stagger-header">
-          <div class="flex items-center gap-2">
-            <MapPin class="w-4 h-4 text-white/90" />
-            <span class="text-sm font-extrabold tracking-wide uppercase">{{ title }}</span>
+          <div class="flex items-start gap-2">
+            <MapPin class="w-4 h-4 text-white/90 mt-0.5" />
+            <div class="flex flex-col gap-0.5">
+              <span class="text-sm font-extrabold tracking-wide uppercase">{{ title }}</span>
+              <span class="text-[9px] text-white/70 font-mono uppercase tracking-widest leading-none">
+                {{ t('weather.last_update_label') }} {{ displayWeatherData?.current?.time ? displayWeatherData.current.time.slice(11, 16) : '' }}
+              </span>
+            </div>
           </div>
           <!-- Spacer to maintain layout balance -->
           <div class="w-9 h-9"></div>
@@ -114,7 +119,7 @@
                     class="text-[9px] lg:text-xs font-bold text-sky-200 min-h-3"
                     :class="{ 'opacity-0': item.rainProb === 0 }"
                   >
-                    💧 {{ item.rainProb }}%
+                    💧 {{ formatMaxDecimals(item.rainProb) }}%
                   </span>
 
                   <!-- Hour -->
@@ -165,7 +170,7 @@
               <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.windSpeed }}</span>
             </div>
             <div class="-mt-2 pt-2 flex items-center justify-between text-xs text-white/80">
-              <span class="font-mono text-[8px] lg:text-xs">{{ t('weather.wind_direction') }}: {{ displayWeatherData?.current?.wind_direction_10m ?? 0 }}°{{ getWindDirectionCardinal(displayWeatherData?.current?.wind_direction_10m ?? 0) }}</span>
+              <span class="font-mono text-[8px] lg:text-xs">{{ t('weather.wind_direction') }}: {{ formatMaxDecimals(displayWeatherData?.current?.wind_direction_10m ?? 0) }}°{{ getWindDirectionCardinal(displayWeatherData?.current?.wind_direction_10m ?? 0) }}</span>
               <ArrowUp 
                 class="w-3.5 h-3.5 text-white stroke-[3] transition-transform duration-500" 
                 :style="{ transform: `rotate(${displayWeatherData?.current?.wind_direction_10m ?? 0}deg)` }"
@@ -257,10 +262,6 @@
           </div>
         </section>
 
-        <span class="text-[10px] text-white/70 mt-2 font-mono uppercase tracking-widest text-center">
-          {{ t('weather.last_update_label') }} {{ displayWeatherData?.current?.time ? displayWeatherData.current.time.slice(11, 16) : '' }}
-        </span>
-
       </div>
     </div>
 </template>
@@ -268,7 +269,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from '#imports'
-import { useWeather } from '~/composables/useWeather'
+import {
+  getWeatherDescriptionKeyFromCode,
+  getWeatherIconFromCode,
+  getWeatherStateFromCode
+} from '~/composables/useBeachWeatherAggregate'
 import type { BeachWeatherItem } from '~/types/beachWeather'
 import {
   X,
@@ -287,6 +292,9 @@ const emit = defineEmits(['close'])
 const props = defineProps<{
   weatherData?: BeachWeatherItem
   title?: string
+  isRefreshing?: boolean
+  isError?: boolean
+  lastUpdate?: number | null
 }>()
 
 const scrollContainer = ref<HTMLElement | null>(null)
@@ -304,20 +312,13 @@ onMounted(() => {
   })
 })
 
-const {
-  weatherData: generalWeatherData,
-  isRefreshing,
-  isError,
-  lastUpdate,
-  getWeatherIcon,
-  getWeatherDescription
-} = useWeather()
-
 const { t } = useI18n()
 
 const title = computed(() => props.title || t('weather.details_title'))
 
-const displayWeatherData = computed(() => props.weatherData ?? generalWeatherData.value)
+const displayWeatherData = computed(() => props.weatherData)
+const isRefreshing = computed(() => props.isRefreshing ?? false)
+const isError = computed(() => props.isError ?? false)
 
 const isDay = computed(() => {
   return displayWeatherData.value?.current?.is_day === 1
@@ -350,24 +351,19 @@ const uv = computed(() => {
 const imgTiempo = computed(() => {
   const code = displayWeatherData.value?.current?.weather_code
   if (code === undefined || code === null) return null
-  return getWeatherIcon(code, isDay.value)
+  return getWeatherIconFromCode(code, isDay.value)
 })
 
 const weatherDescription = computed(() => {
   const code = displayWeatherData.value?.current?.weather_code
   if (code === undefined || code === null) return ''
-  return getWeatherDescription(code, isDay.value)
+  return t(getWeatherDescriptionKeyFromCode(code))
 })
 
 const weatherState = computed(() => {
   const code = displayWeatherData.value?.current?.weather_code
   if (code === undefined || code === null) return 'sunny'
-
-  if (code === 0 || code === 1) return 'sunny'
-  if (code === 2 || code === 3 || code === 45 || code === 48) return 'cloudy'
-  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99)) return 'rainy'
-  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'snowy'
-  return 'sunny'
+  return getWeatherStateFromCode(code)
 })
 
 // These compact meteorological symbols are locale-neutral domain units by design.
@@ -378,8 +374,8 @@ const WEATHER_UNITS = {
 } as const
 
 const formattedLastUpdate = computed(() => {
-  if (!lastUpdate.value) return ''
-  const date = new Date(lastUpdate.value)
+  if (!props.lastUpdate) return ''
+  const date = new Date(props.lastUpdate)
   const hours = date.getHours().toString().padStart(2, '0')
   const minutes = date.getMinutes().toString().padStart(2, '0')
   return `${hours}:${minutes}`
@@ -406,6 +402,10 @@ function formatToAmPm(timeStr: string | undefined) {
   hour = hour % 12
   hour = hour ? hour : 12
   return `${hour}:${minStr} ${ampm}`
+}
+
+function formatMaxDecimals(value: number, decimals = 2) {
+  return Number.isFinite(value) ? Number(value.toFixed(decimals)).toString() : '0'
 }
 
 const sunPosition = computed(() => {
@@ -488,6 +488,14 @@ const hourlyForecast = computed(() => {
     isDayVal: h.is_day?.[idx] === 1
   }))
 })
+
+function getWeatherIcon(code: number, isDayVal: boolean) {
+  return getWeatherIconFromCode(code, isDayVal)
+}
+
+function getWeatherDescription(code: number, _isDayVal?: boolean) {
+  return t(getWeatherDescriptionKeyFromCode(code))
+}
 
 // Graph calculations
 const chartPoints = computed(() => {

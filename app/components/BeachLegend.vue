@@ -1,6 +1,6 @@
 <template>
-  <div class="mb-4 bg-gray-50 p-3.5 rounded-xl border border-gray-100">
-    <h4 class="text-[10px] font-bold text-gray-600 tracking-wider mb-2.5 text-left">
+  <div class="mb-4 bg-gray-50 rounded-xl border border-gray-100 p-4 pt-0">
+    <h4 class="text-[10px] font-bold text-gray-600 tracking-wider text-left pt-0 mt-0">
       {{ $t('beach_flags') }}
     </h4>
     <div class="grid grid-cols-2 gap-3 text-[11px]">

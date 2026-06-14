@@ -7,8 +7,8 @@
       class="w-full p-2 text-left"
       @click="$emit('select', beach)"
     >
-      <div class="flex items-center justify-between w-full min-w-0 gap-3">
-        <div class="flex items-center gap-3 min-w-0">
+      <div class="flex items-center justify-between w-full min-w-0 gap-2 px-2">
+        <div class="flex items-center gap-2 min-w-0 py-2">
           <span
             class="size-4 rounded-full flex-shrink-0"
             :class="getStatusColorClass(beach.state)"
@@ -27,7 +27,7 @@
 
     <div
       v-if="weather"
-      class="mx-2 mb-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2"
+      class="mx-2 mb-2 flex items-center justify-between gap-2 pt-0"
     >
       <div class="flex min-w-0 flex-1 items-center gap-3 text-[11px] font-semibold text-slate-600">
         <span class="flex items-center gap-1 whitespace-nowrap">
