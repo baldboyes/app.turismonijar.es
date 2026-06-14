@@ -50,6 +50,34 @@
         </p>
       </div>
 
+      <!-- Compact weather summary -->
+      <div
+        v-if="weather"
+        class="mb-3 grid grid-cols-4 gap-1.5 rounded-2xl bg-slate-50 p-2 text-[11px] font-bold text-slate-600"
+        :aria-label="$t('weather.beach_summary')"
+      >
+        <span class="flex items-center justify-center gap-1 whitespace-nowrap" :title="$t('weather.temperature')">
+          <Thermometer class="size-3.5 text-orange-500" />
+          {{ weather.current.temperature_2m.toFixed(0) }}°
+        </span>
+        <span class="flex items-center justify-center gap-1 whitespace-nowrap" :title="$t('weather.wind')">
+          <Wind class="size-3.5 text-sky-600" />
+          {{ weather.current.wind_speed_10m.toFixed(0) }} km/h
+        </span>
+        <span class="flex items-center justify-center gap-1 whitespace-nowrap" :title="$t('weather.sea')">
+          <Waves class="size-3.5 text-cyan-600" />
+          {{ weather.sea_surface_temperature.toFixed(0) }}°
+        </span>
+        <span
+          class="flex items-center justify-center gap-1 whitespace-nowrap rounded-full px-1.5 py-0.5 font-extrabold"
+          :class="currentUvClass"
+          :title="$t('weather.uv_index')"
+        >
+          <Sun class="size-3.5" />
+          {{ currentUv }} UV
+        </span>
+      </div>
+
       <!-- Quick characteristics badges -->
       <div class="pt-3 border-t border-gray-50 flex flex-wrap gap-x-3 gap-y-1.5 text-[11px] text-gray-600">
         <div v-if="parsedCharacteristics.arena" class="flex items-center gap-1">
@@ -67,11 +95,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Waves, AlertTriangle } from '@lucide/vue'
+import { AlertTriangle, Sun, Thermometer, Waves, Wind } from '@lucide/vue'
 import type { Beach } from '~/types/beach'
+import type { BeachWeatherItem } from '~/types/beachWeather'
 
 const props = defineProps<{
   beach: Beach
+  weather?: BeachWeatherItem
 }>()
 
 defineEmits(['click'])
@@ -101,6 +131,29 @@ const parsedCharacteristics = computed(() => {
     }
   })
   return result
+})
+
+const currentUv = computed(() => {
+  const weather = props.weather
+  if (!weather) return 0
+
+  const currentHour = weather.current.time?.slice(0, 13)
+  const hourlyIndex = currentHour
+    ? weather.hourly.time.findIndex((time) => time.slice(0, 13) === currentHour)
+    : -1
+  const value = hourlyIndex >= 0
+    ? weather.hourly.uv_index?.[hourlyIndex]
+    : weather.daily.uv_index_max?.[0]
+  return typeof value === 'number' ? Math.round(value) : 0
+})
+
+const currentUvClass = computed(() => {
+  const value = currentUv.value
+  if (value <= 2) return 'bg-emerald-50 text-emerald-700'
+  if (value <= 5) return 'bg-yellow-50 text-yellow-700'
+  if (value <= 7) return 'bg-amber-50 text-amber-700'
+  if (value <= 10) return 'bg-red-50 text-red-700'
+  return 'bg-purple-50 text-purple-700'
 })
 
 function getBadgeClass(bandera: string) {

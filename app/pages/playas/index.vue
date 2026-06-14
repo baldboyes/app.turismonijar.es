@@ -91,6 +91,7 @@
             v-for="beach in filteredBeaches"
             :key="beach.id"
             :beach="beach"
+            :weather="getBeachWeather(beach.id)"
             @click="navigateToBeach(beach.id)"
           />
         </div>
@@ -106,6 +107,7 @@ import { IonPage, IonContent } from '@ionic/vue'
 import { Waves, Search, X, AlertCircle } from '@lucide/vue'
 import { useLocalePath, useSeoMeta, useI18n, useRouter } from '#imports'
 import { useBeachesDetailed } from '~/composables/useBeachesDetailed'
+import { useBeachWeather } from '~/composables/useBeachWeather'
 import BeachCard from '~/components/BeachCard.vue'
 
 const router = useRouter()
@@ -121,6 +123,8 @@ const {
   fetchDetailedBeaches
 } = useBeachesDetailed()
 
+const { fetchBeachWeather, getBeachWeather } = useBeachWeather()
+
 const filters = computed(() => [
   { value: 'all', label: t('playas_page.filter_all') },
   { value: 'verde', label: t('verde') },
@@ -134,7 +138,10 @@ function navigateToBeach(id: string | number) {
 }
 
 onMounted(async () => {
-  await fetchDetailedBeaches()
+  await Promise.all([
+    fetchDetailedBeaches(),
+    fetchBeachWeather()
+  ])
 })
 
 useSeoMeta({
