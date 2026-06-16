@@ -15,27 +15,6 @@
         <!-- Language Switcher Card Component -->
         <LanguageSwitcher />
 
-        <!-- App info card -->
-        <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-          <h3 class="text-sm font-bold text-gray-800 mb-1">{{ $t('settings_panel.info_title') }}</h3>
-          <p class="text-xs text-gray-500 mb-4">{{ $t('settings_panel.info_subtitle') }}</p>
-          <div class="divide-y divide-gray-100 text-xs">
-            <div class="flex justify-between py-2.5">
-              <span class="text-gray-500 font-semibold">{{ $t('settings_panel.version') }}</span>
-              <span class="text-gray-800 font-bold">1.0.1</span>
-            </div>
-            <div class="flex justify-between py-2.5">
-              <span class="text-gray-500 font-semibold">{{ $t('settings_panel.framework') }}</span>
-              <span class="text-gray-800 font-bold">Nuxt 4 / Vue 3</span>
-            </div>
-            <div class="flex justify-between py-2.5">
-              <span class="text-gray-500 font-semibold">{{ $t('settings_panel.environment') }}</span>
-              <span class="text-gray-800 font-bold">Capacitor Native (iOS / Android)</span>
-            </div>
-          </div>
-        </div>
-
-
         <!-- Logo -->
         <div class="flex flex-col gap-4 items-center justify-center mt-18 mb-8">
           <img src="/turismonijar.svg" :alt="$t('title1')" class="w-32 lg:w-48 h-auto mx-auto" />
@@ -56,7 +35,7 @@
 
           <div class="flex justify-between gap-2 text-xs">
             <span class="text-gray-400 font-semibold">{{ $t('settings_panel.version') }}</span>
-            <span class="text-gray-700 font-bold">1.0.1</span>
+            <span class="text-gray-700 font-bold">0.65</span>
           </div>
 
         </div>

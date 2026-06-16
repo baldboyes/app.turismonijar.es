@@ -1,5 +1,6 @@
 <template>
   <div class="space-y-2">
+
     <BeachListItem
       v-for="beach in beaches"
       :key="beach.id"
@@ -8,6 +9,7 @@
       @select="$emit('select-beach', beach)"
       @open-weather="openWeather"
     />
+
     <div v-if="fechasServicio" class="text-[10px] text-gray-600 mt-2.5 text-center pt-2 font-medium">
       {{ $t('service_active') }}<br />{{ fechasServicio }}
     </div>
@@ -15,7 +17,7 @@
     <Teleport to="body">
       <div
         v-if="selectedWeather"
-        class="fixed inset-0 z-[100] h-screen w-screen overflow-y-auto text-white"
+        class="fixed inset-0 z-[20000] h-screen w-screen overflow-y-auto text-white"
         @click="closeWeather"
       >
         <WeatherBackground

@@ -27,7 +27,7 @@
       class="px-4 pb-4 border-b border-slate-100/80 flex items-center gap-3 relative select-none shrink-0"
     >
       <Button
-        v-if="state === 'full' || state === 'mid'"
+        v-if="!lockAtMid && (state === 'full' || state === 'mid')"
         variant="ghost"
         size="icon"
         :aria-label="$t('drawer.collapse')"
@@ -41,15 +41,15 @@
 
       <div class="min-w-0 flex-1 select-none text-left">
         <div class="flex max-w-full items-center gap-2 overflow-hidden">
-          <span class="min-w-0 truncate text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+          <span class="min-w-0 truncate font-semibold uppercase tracking-[0.1em] text-slate-500">
             <template v-if="lastModified && lastModified.length >= 12">
-              {{ $t('last_update_label') }} 
+              <span class="block text-[9px] leading-none">{{ $t('last_update_label') }}</span>
             </template>
-            {{ formattedDate }}
+            <span class="block text-[11px] leading-tight">{{ formattedDate }}</span>
           </span>
           <span
             v-if="lastModified && lastModified.length >= 12"
-            class="shrink-0 text-[9px] font-extrabold uppercase tracking-wider"
+            class="ml-auto shrink-0 text-[9px] font-extrabold uppercase tracking-wider"
             :class="isProvisional ? 'text-amber-700' : 'text-emerald-700'"
           >
             {{ isProvisional ? $t('provisional') : $t('definitivo') }}
@@ -59,9 +59,9 @@
     </div>
 
     <div
-      class="flex-1 overflow-y-auto bg-gradient-to-b from-white via-white to-slate-50/80 px-4 pt-4 pb-24 sm:px-5"
+      class="flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-white via-white to-slate-50/80 px-4 pt-4 pb-[calc(2rem+var(--safe-area-inset-bottom,0px))] sm:px-5"
       :class="{ 'pointer-events-none': isDragging }"
-      :style="{ maxHeight: scrollMaxHeight }"
+      :style="{ maxHeight: scrollAreaMaxHeight }"
     >
       <slot />
     </div>
@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ChevronDown } from '@lucide/vue'
 import Button from '@/components/ui/button/Button.vue'
 import { useI18n } from '#imports'
@@ -77,14 +77,23 @@ import { getSafeAreaInsets } from '~/utils/safeArea'
 
 const { t } = useI18n()
 
+type DrawerState = 'peek' | 'mid' | 'full'
+type DrawerTargetState = 'hidden' | DrawerState
+
 interface Props {
   lastModified?: string
   isProvisional?: boolean
+  startHidden?: boolean
+  targetState?: DrawerTargetState
+  lockAtMid?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   lastModified: '',
-  isProvisional: false
+  isProvisional: false,
+  startHidden: false,
+  targetState: undefined,
+  lockAtMid: false
 })
 
 const emit = defineEmits(['state-change', 'drag'])
@@ -99,12 +108,13 @@ const formattedDate = computed(() => {
   return `${day}/${month}/${year} ${hour}:${minute}`
 })
 
-const state = ref<'peek' | 'mid' | 'full'>('peek')
+const state = ref<DrawerState>('peek')
 const isDragging = ref(false)
 const windowHeight = ref(800)
 const safeAreaTop = ref(0)
 const safeAreaBottom = ref(0)
-const translateY = ref(550) // Valor por defecto antes de montar
+const translateY = ref(props.startHidden ? 1000 : 550) // Valor por defecto antes de montar
+const hasMounted = ref(false)
 
 function updateSafeArea() {
   const insets = getSafeAreaInsets()
@@ -119,31 +129,20 @@ const maxTranslate = computed(() => {
   return windowHeight.value - visibleHeight - safeAreaTop.value
 })
 
-const headerFooterOffset = computed(() => 64 + safeAreaBottom.value + 80)
+const scrollAreaMaxHeight = computed(() => {
+  if (state.value === 'full') return 'auto'
 
-// Calcula la altura máxima del scroll en tiempo real
-const scrollMaxHeight = computed(() => {
-  const offset = headerFooterOffset.value
-  
-  if (isDragging.value) {
-    const visibleHeight = windowHeight.value - translateY.value - safeAreaTop.value
-    return `${Math.max(120, visibleHeight - offset)}px`
-  }
-  
-  if (state.value === 'peek') {
-    return '120px'
-  } else if (state.value === 'mid') {
-    const visibleHeight = windowHeight.value / 2 - safeAreaTop.value
-    return `${Math.max(120, visibleHeight - offset)}px`
-  } else {
-    return 'none'
-  }
+  const visibleHeight = windowHeight.value - translateY.value - safeAreaTop.value
+  const drawerChromeHeight = props.lockAtMid ? 72 : 104
+  const usableHeight = visibleHeight - drawerChromeHeight
+
+  return `${Math.max(120, usableHeight)}px`
 })
 
 const drawerStyle = computed(() => {
   return {
     height: '100dvh',
-    zIndex: state.value === 'full' ? 45 : 40,
+    zIndex: state.value === 'full' ? 10010 : 10000,
     bottom: 0,
     transform: `translateY(calc(${translateY.value}px + var(--safe-area-top, 0px)))`,
     // Sin retraso en la transición durante el arrastre
@@ -154,13 +153,29 @@ const drawerStyle = computed(() => {
 })
 
 onMounted(() => {
+  hasMounted.value = true
+
   if (import.meta.client) {
     windowHeight.value = window.innerHeight
     updateSafeArea()
-    translateY.value = maxTranslate.value
+    translateY.value = props.startHidden ? windowHeight.value : maxTranslate.value
+
+    if (props.targetState) {
+      window.requestAnimationFrame(() => {
+        applyTargetState(props.targetState ?? 'peek')
+      })
+    }
     
     window.addEventListener('resize', onResize)
+  } else if (props.targetState) {
+    applyTargetState(props.targetState)
   }
+})
+
+watch(() => props.targetState, (targetState) => {
+  if (!hasMounted.value || !targetState) return
+
+  applyTargetState(targetState)
 })
 
 onUnmounted(() => {
@@ -174,7 +189,9 @@ onUnmounted(() => {
 function onResize() {
   windowHeight.value = window.innerHeight
   updateSafeArea()
-  if (state.value === 'peek') {
+  if (props.targetState === 'hidden') {
+    translateY.value = windowHeight.value
+  } else if (state.value === 'peek') {
     translateY.value = maxTranslate.value
   } else if (state.value === 'mid') {
     translateY.value = windowHeight.value / 2
@@ -273,6 +290,7 @@ function onMouseUp(e: MouseEvent) {
 }
 
 function toggleState() {
+  if (props.lockAtMid) return
   if (state.value === 'peek') {
     setState('mid')
   } else if (state.value === 'mid') {
@@ -283,12 +301,22 @@ function toggleState() {
 }
 
 function snapState(deltaY: number, duration: number) {
+  if (props.lockAtMid) {
+    if (deltaY > 40) {
+      applyTargetState('hidden')
+      emit('state-change', 'peek')
+    } else {
+      setState('mid')
+    }
+    return
+  }
+
   const velocity = duration > 0 ? deltaY / duration : 0
   const midPoint = windowHeight.value / 2
   const thresholdFullMid = midPoint / 2
   const thresholdMidPeek = (midPoint + maxTranslate.value) / 2
 
-  let targetState: 'peek' | 'mid' | 'full' = 'peek'
+  let targetState: DrawerState = 'peek'
 
   if (velocity < -0.8) {
     targetState = 'full'
@@ -325,7 +353,16 @@ function onCollapseClick(e: MouseEvent) {
   setState('peek')
 }
 
-function setState(newState: 'peek' | 'mid' | 'full') {
+function applyTargetState(targetState: DrawerTargetState) {
+  if (targetState === 'hidden') {
+    translateY.value = windowHeight.value
+    return
+  }
+
+  setState(targetState)
+}
+
+function setState(newState: DrawerState) {
   state.value = newState
   if (newState === 'peek') {
     translateY.value = maxTranslate.value

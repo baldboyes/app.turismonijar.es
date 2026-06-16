@@ -55,6 +55,7 @@ export function useBeaches() {
         return {
           ...flagItem,
           id: detailedId,
+          src: detailedBeach?.src || flagItem.src,
           description: detailedBeach?.description || '',
           ocupacion: oItem ? { state: oItem.state } : undefined
         }

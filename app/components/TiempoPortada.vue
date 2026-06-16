@@ -3,7 +3,7 @@
     class="select-none weather-card text-white"
     :class="[
       isDetailOpen
-        ? 'fixed inset-0 w-screen h-screen rounded-none z-[100] cursor-default overflow-y-auto pb-safe'
+        ? 'fixed inset-0 w-screen h-screen rounded-none z-[20000] cursor-default overflow-y-auto pb-safe'
         : 'fixed rounded-3xl w-56 h-26 cursor-pointer z-20 shadow-lg overflow-hidden',
       { 'theme-darker-boxes': isDarkerBoxes }
     ]"

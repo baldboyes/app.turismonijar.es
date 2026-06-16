@@ -115,6 +115,7 @@
     "wind_direction": "Wind Direction",
     "close": "Close",
     "details": "Details",
+    "view_weather": "View weather",
     "open_beach_details": "View weather for {beach}",
     "timezone": "Timezone",
     "latitude": "Latitude",

@@ -1,7 +1,7 @@
 <template>
   <div
     @click="$emit('click')"
-    class="w-full text-left bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-300 flex flex-col group select-none"
+    class="w-full text-left bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-300 flex flex-col group select-none cursor-pointer"
   >
     <!-- Card Image Header -->
     <div class="relative w-full h-44 overflow-hidden bg-gray-100 shrink-0">
@@ -37,11 +37,11 @@
     <div class="p-4 flex-1 flex flex-col justify-between min-w-0">
       <div>
         <!-- Date -->
-        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wide block mb-1">
+        <span class="text-[10px] font-bold text-gray-600 uppercase tracking-wide block -mb-1">
           {{ formattedDate }}
         </span>
 
-        <h3 class="font-extrabold text-gray-800 text-base mb-1.5 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug">
+        <h3 class="font-extrabold text-primary text-base mb-1.5 line-clamp-2 group-hover:text-primary transition-colors leading-snug cursor-pointer">
           {{ article.title }}
         </h3>
         
@@ -52,7 +52,7 @@
       </div>
 
       <!-- Footer action -->
-      <div class="pt-3 border-t border-gray-50 flex items-center justify-between text-[11px] font-bold text-emerald-600">
+      <div class="pt-3 border-t border-gray-50 flex items-center justify-between text-[11px] font-bold text-primary cursor-pointer">
         <span>{{ $t('noticias_page.read_more') }}</span>
         <ArrowRight class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
       </div>

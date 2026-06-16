@@ -39,7 +39,7 @@
       </div>
 
       <!-- Detail View -->
-      <div v-else class="max-w-[1024px] mx-auto p-4 lg:p-6 space-y-4 pb-28">
+      <div v-else class="max-w-[1024px] mx-auto p-4 lg:p-6 space-y-4 pb-28 lg:pb-28">
         <!-- Hero image with flag overlay -->
         <div class="relative w-full h-64 rounded-3xl overflow-hidden bg-gray-100 shrink-0">
           <NuxtImg
@@ -83,10 +83,11 @@
             </h3>
             <button
               type="button"
-              class="rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 transition-colors hover:bg-emerald-50"
+              class="flex items-center gap-1.5 !px-3.5 !py-2 !bg-primary !hover:bg-primary/90 !text-primary-foreground font-bold text-[11px] !rounded-xl transition-all shrink-0"
               :aria-label="$t('weather.open_beach_details', { beach: beach.title })"
               @click="isWeatherModalOpen = true"
             >
+              <Thermometer class="w-3.5 h-3.5" />
               {{ $t('weather.details') }}
             </button>
           </div>
@@ -186,7 +187,7 @@
             <a
               :href="`https://www.google.com/maps/search/?api=1&query=${beach.lat},${beach.lng}`"
               target="_blank"
-              class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px] rounded-xl transition-all shadow-inner shrink-0"
+              class="flex items-center gap-1.5 px-3.5 py-2 !bg-primary !hover:bg-primary/90 !text-primary-foreground font-bold text-[11px] rounded-xl transition-all shrink-0"
             >
               <MapPin class="w-3.5 h-3.5" />
               {{ $t('playas_page.open_maps') }}
@@ -246,7 +247,7 @@
               </h3>
             </div>
             <!-- Render WordPress rich contact HTML (like links) safely -->
-            <div class="text-xs text-emerald-600 font-semibold space-y-1 prose contact-links" v-html="beach.contacto"></div>
+            <div class="text-xs !text-primary font-semibold space-y-1 prose contact-links" v-html="beach.contacto"></div>
           </div>
         </div>
       </div>
@@ -417,10 +418,12 @@ function getDotColorClass(bandera: string) {
 
 /* Ensure contact links are appropriately styled */
 .contact-links :deep(a) {
-  color: var(--color-emerald-600);
+  color: var(--color-primary);
   font-weight: 700;
   text-decoration: underline;
   transition: opacity 0.2s;
+  padding: 0px;
+  margin: 0px;
 }
 
 .contact-links :deep(a:hover) {

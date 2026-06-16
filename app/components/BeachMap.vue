@@ -2,15 +2,40 @@
   <div class="w-full h-full">
     <div ref="mapContainer" class="w-full h-full"></div>
   </div>
+
+  <Teleport to="body">
+    <div
+      v-if="selectedWeather"
+      class="fixed inset-0 z-[20000] h-screen w-screen overflow-y-auto text-white"
+      @click="closeWeather"
+    >
+      <WeatherBackground
+        :weather-state="selectedWeatherState"
+        :is-day="selectedWeather.current.is_day === 1"
+        :is-fixed="true"
+      />
+      <TiempoDetalleModal
+        :weather-data="selectedWeather"
+        :title="selectedWeather.nombre"
+        class="relative z-10"
+        @close="closeWeather"
+      />
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useI18n, useLocalePath, useRouter } from '#imports'
 
 import type { Beach } from '~/types/beach'
+import type { BeachWeatherItem } from '~/types/beachWeather'
+import { useBeachWeather } from '~/composables/useBeachWeather'
+import type { WeatherState } from '~/composables/useWeather'
+import TiempoDetalleModal from './TiempoDetalleModal.vue'
+import { buildBeachPopupHtml, escapeHtml, shouldFitBoundsForWeatherRefresh } from './BeachMap.popup'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -29,10 +54,23 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits(['marker-click', 'deselect'])
 
 const mapContainer = ref<HTMLElement | null>(null)
+const selectedWeather = ref<BeachWeatherItem | null>(null)
+const { fetchBeachWeather, getBeachWeather, beachesWeather } = useBeachWeather()
 let map: mapboxgl.Map | null = null
 const markers = new Map<number | string, mapboxgl.Marker>()
 let animationFrameId: number | null = null
 const timeoutIds = new Set<any>()
+
+const selectedWeatherState = computed<WeatherState>(() => {
+  const code = selectedWeather.value?.current.weather_code
+  if (code === undefined || code === null) return 'sunny'
+
+  if (code === 0 || code === 1) return 'sunny'
+  if (code === 2 || code === 3 || code === 45 || code === 48) return 'cloudy'
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99)) return 'rainy'
+  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'snowy'
+  return 'sunny'
+})
 
 function safeSetTimeout(fn: () => void, delay: number) {
   const id = setTimeout(() => {
@@ -110,8 +148,12 @@ function appendRedDot(parent: HTMLElement) {
   parent.appendChild(dot)
 }
 
+function closeWeather() {
+  selectedWeather.value = null
+}
+
 // Update or initialize markers
-function updateMarkers() {
+function updateMarkers(shouldFitBounds = true) {
   if (!map) return
 
   // Remove old markers
@@ -126,37 +168,22 @@ function updateMarkers() {
       markerElement.style.opacity = '0.65'
       markerElement.style.transition = 'opacity 0.3s ease'
     }
-    const bgClass = getStatusBgClass(beach.state)
     const statusText = t(beach.state.toLowerCase())
-    const popupStatus = t('map.flag_status', { status: statusText })
-    
-    const cleanDesc = beach.description
-      ? beach.description.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
-      : ''
-    const truncateDesc = cleanDesc.length > 120 ? cleanDesc.slice(0, 120) + '...' : cleanDesc
+    const popupStatus = statusText
+    const beachWeather = getBeachWeather(beach.id)
     const linkUrl = localePath(`/playas/${beach.id}`)
 
     // Create popup matching popup styling in HTML
-    const popup = new mapboxgl.Popup({ offset: 25 })
-      .setHTML(`
-        <div class="beach-info p-1 text-left max-w-[200px]">
-          <div class="beach-title font-bold text-gray-800 text-sm mb-1">${beach.title}</div>
-          <div class="flex flex-wrap gap-1 mb-1.5">
-            <div class="beach-status text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full text-white inline-block ${bgClass}">
-              ${popupStatus}
-            </div>
-            ${isFull ? `
-              <div class="parking-status text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-red-600 text-white inline-block shadow-sm">
-                ${t('playas_page.parking_full')}
-              </div>
-            ` : ''}
-          </div>
-          ${truncateDesc ? `<p class="text-[11px] text-gray-500 leading-normal mb-2">${truncateDesc}</p>` : ''}
-          <a href="${linkUrl}" class="beach-link inline-block text-[11px] font-bold text-emerald-600 hover:text-emerald-700 active:scale-[0.98] transition-all">
-            ${t('map.view_beach')} →
-          </a>
-        </div>
-      `)
+    const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '300px' })
+      .setHTML(buildBeachPopupHtml({
+        beach,
+        beachWeather,
+        linkUrl,
+        popupStatus,
+        viewBeachText: t('map.view_beach'),
+        viewWeatherText: t('weather.view_weather'),
+        parkingFullText: t('playas_page.parking_full')
+      }))
 
     const marker = new mapboxgl.Marker(markerElement)
       .setLngLat([beach.lng, beach.lat])
@@ -179,16 +206,8 @@ function updateMarkers() {
   })
 
   // Fit bounds to all markers if there are any
-  fitBounds()
-}
-
-function getStatusBgClass(state: string) {
-  switch (state.toLowerCase()) {
-    case 'verde': return 'bg-status-verde'
-    case 'amarilla': return 'bg-status-amarilla text-gray-900' // Better contrast on bright yellow
-    case 'amarilla_por_medusa': return 'bg-status-medusa'
-    case 'roja': return 'bg-status-roja'
-    default: return 'bg-gray-500'
+  if (shouldFitBounds) {
+    fitBounds()
   }
 }
 
@@ -306,6 +325,10 @@ watch(() => props.beaches, () => {
   updateMarkers()
 }, { deep: true })
 
+watch(beachesWeather, () => {
+  updateMarkers(shouldFitBoundsForWeatherRefresh())
+})
+
 watch(() => props.isProvisional, () => {
   updateMarkers()
 })
@@ -331,6 +354,8 @@ watch(() => props.drawerState, () => {
 })
 
 onMounted(() => {
+  fetchBeachWeather()
+
   if (mapContainer.value) {
     map = new mapboxgl.Map({
       container: mapContainer.value,
@@ -386,11 +411,25 @@ onUnmounted(() => {
 
 function handlePopupLinkClick(e: MouseEvent) {
   const target = e.target as HTMLElement
-  if (target && target.classList.contains('beach-link')) {
+  const beachLink = target.closest<HTMLAnchorElement>('.beach-link')
+  if (beachLink) {
     e.preventDefault()
-    const href = target.getAttribute('href')
+    const href = beachLink.getAttribute('href')
     if (href) {
       router.push(href)
+    }
+    return
+  }
+
+  const weatherLink = target.closest<HTMLButtonElement>('.beach-weather-link')
+  if (weatherLink) {
+    e.preventDefault()
+    const beachId = weatherLink.dataset.beachId
+    if (!beachId) return
+
+    const weather = getBeachWeather(beachId)
+    if (weather) {
+      selectedWeather.value = weather
     }
   }
 }
@@ -407,31 +446,60 @@ function onResize() {
 <style>
 /* Custom style for mapbox popups */
 .mapboxgl-popup-content {
-  padding: 12px 16px !important;
-  border-radius: 12px !important;
+  padding: 0 !important;
+  border-radius: 30px !important;
   box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12) !important;
-  border: 1px solid #e5e7eb !important;
+  border: 0 !important;
+}
+
+.mapboxgl-popup {
+  max-width: 300px !important;
 }
 
 .mapboxgl-popup-close-button {
-  top: 6px !important;
-  right: 6px !important;
-  color: #9ca3af !important;
-  font-size: 16px !important;
-  border-radius: 50% !important;
-  width: 20px !important;
-  height: 20px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border: none !important;
-  background: transparent !important;
-  cursor: pointer !important;
+    top: -8px !important;
+    right: -8px !important;
+    margin: 0;
+    padding: 0;
+    color: #232323 !important;
+    font-size: 20px !important;
+    border-radius: 50% !important;
+    width: 35px !important;
+    height: 35px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    background: #fff !important;
+    cursor: pointer !important;
 }
 
 .mapboxgl-popup-close-button:hover {
   background-color: #f3f4f6 !important;
   color: #374151 !important;
+}
+
+.mapboxgl-popup-content .beach-popup-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 0 !important;
+  border-radius: 9999px !important;
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  padding: 0.375rem 0.75rem !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+}
+
+.mapboxgl-popup-content .beach-popup-action:disabled,
+.mapboxgl-popup-content .beach-popup-action[aria-disabled="true"] {
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
 }
 
 /* Parking full pulsing dot style */
