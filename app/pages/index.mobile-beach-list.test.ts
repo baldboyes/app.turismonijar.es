@@ -5,6 +5,7 @@ import {
   MOBILE_DRAWER_CLOSE_DELAY_MS,
   shouldHideWeatherPanel,
   shouldMountBeachListDrawer,
+  shouldUseHomeSplitLayout,
   type DrawerTargetState,
   type DrawerState
 } from './index.mobile-beach-list'
@@ -25,6 +26,18 @@ describe('beach list drawer state', () => {
 
     expect(shouldMountBeachListDrawer(true)).toBe(true)
     expect(shouldHideWeatherPanel(true)).toBe(true)
+    expect(shouldHideWeatherPanel(false, true)).toBe(true)
+  })
+
+  it('uses split layout for desktop and tablet landscape only', () => {
+    expect(shouldUseHomeSplitLayout(1200, 1600)).toBe(true)
+    expect(shouldUseHomeSplitLayout(1280, 720)).toBe(true)
+    expect(shouldUseHomeSplitLayout(900, 600)).toBe(true)
+
+    expect(shouldUseHomeSplitLayout(767, 480)).toBe(false)
+    expect(shouldUseHomeSplitLayout(768, 1024)).toBe(false)
+    expect(shouldUseHomeSplitLayout(1024, 1366)).toBe(false)
+    expect(shouldUseHomeSplitLayout(430, 932)).toBe(false)
   })
 
   it('mounts the drawer and declares mid as the target state when opening from the top toggle', () => {

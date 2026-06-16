@@ -35,7 +35,7 @@ import type { BeachWeatherItem } from '~/types/beachWeather'
 import { useBeachWeather } from '~/composables/useBeachWeather'
 import type { WeatherState } from '~/composables/useWeather'
 import TiempoDetalleModal from './TiempoDetalleModal.vue'
-import { buildBeachPopupHtml, escapeHtml, shouldFitBoundsForWeatherRefresh } from './BeachMap.popup'
+import { buildBeachPopupHtml, shouldFitBoundsForWeatherRefresh } from './BeachMap.popup'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -477,6 +477,12 @@ function onResize() {
 .mapboxgl-popup-close-button:hover {
   background-color: #f3f4f6 !important;
   color: #374151 !important;
+}
+
+@media (max-width: 767px) {
+  .mapboxgl-popup-close-button {
+    display: none !important;
+  }
 }
 
 .mapboxgl-popup-content .beach-popup-action {

@@ -4,6 +4,8 @@ export type DrawerState = 'peek' | 'mid' | 'full'
 export type DrawerTargetState = 'hidden' | DrawerState
 
 export const MOBILE_DRAWER_CLOSE_DELAY_MS = 420
+export const HOME_SPLIT_DESKTOP_MIN_WIDTH = 1200
+export const HOME_SPLIT_TABLET_MIN_WIDTH = 768
 
 type BeachListStateRefs = {
   isBeachListMounted: Ref<boolean>
@@ -21,8 +23,16 @@ export function shouldMountBeachListDrawer(isBeachListMounted: boolean) {
   return isBeachListMounted
 }
 
-export function shouldHideWeatherPanel(isBeachListVisible: boolean) {
-  return isBeachListVisible
+export function shouldUseHomeSplitLayout(width: number, height: number) {
+  if (width >= HOME_SPLIT_DESKTOP_MIN_WIDTH) {
+    return true
+  }
+
+  return width >= HOME_SPLIT_TABLET_MIN_WIDTH && width > height
+}
+
+export function shouldHideWeatherPanel(isBeachListVisible: boolean, isSplitLayout = false) {
+  return isSplitLayout || isBeachListVisible
 }
 
 export function createBeachListStateController(

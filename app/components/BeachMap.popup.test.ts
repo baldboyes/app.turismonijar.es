@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildBeachPopupHtml, escapeCssUrl, getUvBadgeClass, shouldFitBoundsForWeatherRefresh } from './BeachMap.popup'
+import {
+  buildBeachPopupHtml,
+  escapeCssUrl,
+  getUvBadgeClass,
+  shouldFitBoundsForWeatherRefresh
+} from './BeachMap.popup'
 import type { Beach } from '~/types/beach'
 import type { BeachWeatherItem } from '~/types/beachWeather'
 
@@ -120,6 +125,13 @@ describe('BeachMap popup helpers', () => {
     expect(html).toContain('UV 7')
     expect(html).not.toContain('☀️')
     expect(html).not.toContain('💨')
+  })
+
+  it('does not render wind animation markup in the popup', () => {
+    const html = renderPopup()
+
+    expect(html).not.toContain('popup-wind-flow')
+    expect(html).not.toContain('beach-marker-wind-indicator')
   })
 
   it('renders beach and weather actions with escaped navigation attributes and primary rounded styling', () => {
