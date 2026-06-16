@@ -8,6 +8,7 @@
         >
           <div class="shrink-0 border-b border-slate-100/80 px-4 pb-4 pt-[calc(var(--safe-area-inset-top,0px)+1rem)]">
             <div class="flex max-w-full items-center gap-2 overflow-hidden">
+              <img src="/favicon.svg" alt="" aria-hidden="true" class="size-8 shrink-0" />
               <span class="min-w-0 truncate font-semibold uppercase tracking-[0.1em] text-slate-500">
                 <template v-if="lastModified && lastModified.length >= 12">
                   <span class="block text-[9px] leading-none">{{ $t('last_update_label') }}</span>
