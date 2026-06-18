@@ -39,15 +39,16 @@
 
     <!-- Card Content -->
     <div class="p-4 flex-1 flex flex-col justify-between min-w-0">
-      <div>
-        <h3 class="font-extrabold text-primary text-base mb-1 truncate group-hover:text-primary transition-colors">
+      <div class="mb-3">
+        <h3 class="font-extrabold text-primary text-base mb-1 group-hover:text-primary transition-colors">
           {{ beach.title }}
         </h3>
         
-        <!-- Clean Description Text (Strips HTML tags & limits to 2 lines) -->
+        <!-- Clean Description Text (Strips HTML tags & limits to 2 lines)
         <p class="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
           {{ cleanDescription }}
         </p>
+        -->
       </div>
 
       <!-- Compact weather summary -->
@@ -105,6 +106,7 @@ import { computed } from 'vue'
 import { AlertTriangle, Sun, Thermometer, Waves, Wind, ArrowRight } from '@lucide/vue'
 import type { Beach } from '~/types/beach'
 import type { BeachWeatherItem } from '~/types/beachWeather'
+import { getBeachStatusBadgeClass, getBeachStatusDotClass } from '~/utils/beachStatusStyles'
 
 const props = defineProps<{
   beach: Beach
@@ -164,20 +166,10 @@ const currentUvClass = computed(() => {
 })
 
 function getBadgeClass(bandera: string) {
-  const b = bandera.toLowerCase()
-  if (b === 'verde') return 'bg-emerald-500/90 text-white'
-  if (b === 'amarilla') return 'bg-amber-400/90 text-gray-900'
-  if (b === 'amarilla_por_medusa') return 'bg-orange-500/90 text-white'
-  if (b === 'roja') return 'bg-red-600/90 text-white'
-  return 'bg-gray-500/90 text-white'
+  return getBeachStatusBadgeClass(bandera)
 }
 
 function getDotColorClass(bandera: string) {
-  const b = bandera.toLowerCase()
-  if (b === 'verde') return 'bg-white'
-  if (b === 'amarilla') return 'bg-gray-900'
-  if (b === 'amarilla_por_medusa') return 'bg-white'
-  if (b === 'roja') return 'bg-white'
-  return 'bg-white'
+  return getBeachStatusDotClass(bandera)
 }
 </script>

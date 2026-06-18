@@ -2,6 +2,9 @@ import { ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createBeachListStateController,
+  getHomeSplitMapLeftPadding,
+  HOME_SPLIT_MAP_PADDING_BOTTOM,
+  HOME_SPLIT_MAP_PADDING_TOP,
   MOBILE_DRAWER_CLOSE_DELAY_MS,
   shouldHideWeatherPanel,
   shouldMountBeachListDrawer,
@@ -38,6 +41,14 @@ describe('beach list drawer state', () => {
     expect(shouldUseHomeSplitLayout(768, 1024)).toBe(false)
     expect(shouldUseHomeSplitLayout(1024, 1366)).toBe(false)
     expect(shouldUseHomeSplitLayout(430, 932)).toBe(false)
+  })
+
+  it('pads split layout map bounds beyond the floating beach list', () => {
+    expect(getHomeSplitMapLeftPadding(0)).toBe(45)
+    expect(getHomeSplitMapLeftPadding(900)).toBe(458)
+    expect(getHomeSplitMapLeftPadding(1280)).toBe(500)
+    expect(HOME_SPLIT_MAP_PADDING_TOP).toBe(90)
+    expect(HOME_SPLIT_MAP_PADDING_BOTTOM).toBe(160)
   })
 
   it('mounts the drawer and declares mid as the target state when opening from the top toggle', () => {

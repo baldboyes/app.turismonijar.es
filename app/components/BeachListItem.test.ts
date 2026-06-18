@@ -212,7 +212,7 @@ describe('BeachListItem', () => {
     const html = await renderBeachListItem({ beach, weather })
 
     expect(html).toContain('aria-label="View beach: Test Beach"')
-    expect(html).toContain('bg-emerald-600')
+    expect(html).toContain('bg-status-verde')
     expect(html).toContain('Test Beach')
     expect(html).toContain('Green flag')
   })

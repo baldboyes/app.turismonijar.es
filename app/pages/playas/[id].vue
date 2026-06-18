@@ -284,6 +284,7 @@ import { useRoute, useRouter, useLocalePath, useSeoMeta, useI18n } from '#import
 import { useBeachesDetailed } from '~/composables/useBeachesDetailed'
 import { useBeachWeather } from '~/composables/useBeachWeather'
 import type { WeatherState } from '~/composables/useWeather'
+import { getBeachStatusBadgeClass, getBeachStatusDotClass } from '~/utils/beachStatusStyles'
 import BeachDetailMap from '@/components/BeachDetailMap.vue'
 import TiempoDetalleModal from '@/components/TiempoDetalleModal.vue'
 
@@ -393,21 +394,11 @@ useSeoMeta({
 })
 
 function getBadgeClass(bandera: string) {
-  const b = bandera.toLowerCase()
-  if (b === 'verde') return 'bg-emerald-500/90 text-white'
-  if (b === 'amarilla') return 'bg-amber-400/90 text-gray-900'
-  if (b === 'amarilla_por_medusa') return 'bg-orange-500/90 text-white'
-  if (b === 'roja') return 'bg-red-600/90 text-white'
-  return 'bg-gray-500/90 text-white'
+  return getBeachStatusBadgeClass(bandera)
 }
 
 function getDotColorClass(bandera: string) {
-  const b = bandera.toLowerCase()
-  if (b === 'verde') return 'bg-white'
-  if (b === 'amarilla') return 'bg-gray-900'
-  if (b === 'amarilla_por_medusa') return 'bg-white'
-  if (b === 'roja') return 'bg-white'
-  return 'bg-white'
+  return getBeachStatusDotClass(bandera)
 }
 </script>
 

@@ -34,6 +34,7 @@ import type { Beach } from '~/types/beach'
 import type { BeachWeatherItem } from '~/types/beachWeather'
 import { useBeachWeather } from '~/composables/useBeachWeather'
 import type { WeatherState } from '~/composables/useWeather'
+import { getBeachStatusCssColor } from '~/utils/beachStatusStyles'
 import TiempoDetalleModal from './TiempoDetalleModal.vue'
 import { buildBeachPopupHtml, shouldFitBoundsForWeatherRefresh } from './BeachMap.popup'
 
@@ -45,9 +46,13 @@ const props = withDefaults(defineProps<{
   beaches: Beach[]
   selectedBeachId?: number | string | null
   drawerState?: 'peek' | 'mid' | 'full'
+  fitBoundsPaddingTop?: number
+  fitBoundsPaddingBottom?: number
+  fitBoundsPaddingLeft?: number
   isProvisional?: boolean
 }>(), {
   drawerState: 'peek',
+  fitBoundsPaddingLeft: 45,
   isProvisional: false
 })
 
@@ -58,8 +63,10 @@ const selectedWeather = ref<BeachWeatherItem | null>(null)
 const { fetchBeachWeather, getBeachWeather, beachesWeather } = useBeachWeather()
 let map: mapboxgl.Map | null = null
 const markers = new Map<number | string, mapboxgl.Marker>()
+const windMarkers = new Map<number | string, mapboxgl.Marker>()
 let animationFrameId: number | null = null
 const timeoutIds = new Set<any>()
+const WIND_MARKER_MIN_ZOOM = 12
 
 const selectedWeatherState = computed<WeatherState>(() => {
   const code = selectedWeather.value?.current.weather_code
@@ -83,17 +90,6 @@ function safeSetTimeout(fn: () => void, delay: number) {
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmFsZGJveSIsImEiOiJhMzBzeklzIn0.buJ1PP9-a9JkqNWGHW-H0g'
 
-// Helper to get color hex
-function getColorByState(state: string) {
-  switch (state.toLowerCase()) {
-    case 'verde': return '#28a745'
-    case 'amarilla': return '#ffc107'
-    case 'amarilla_por_medusa': return '#ff8c00'
-    case 'roja': return '#dc3545'
-    default: return '#6c757d'
-  }
-}
-
 // Helper to create custom HTML element for marker
 function createFlagMarker(state: string, isFull?: boolean) {
   const el = document.createElement('div')
@@ -114,7 +110,7 @@ function createFlagMarker(state: string, isFull?: boolean) {
       svgPath = '/banderas/estados/roja_.svg'
       break
     default:
-      const color = getColorByState(state)
+      const color = getBeachStatusCssColor(state)
       el.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 30 30">
           <circle cx="15" cy="15" r="12" fill="${color}" stroke="white" stroke-width="2"/>
@@ -146,6 +142,57 @@ function appendRedDot(parent: HTMLElement) {
   const dot = document.createElement('div')
   dot.className = 'parking-full-dot'
   parent.appendChild(dot)
+}
+
+function createWindMarkerElement(windDirection: number, windSpeed: number) {
+  const el = document.createElement('div')
+  el.className = 'beach-wind-marker'
+  el.setAttribute('aria-hidden', 'true')
+  el.title = `${formatWindSpeed(windSpeed)} km/h`
+  el.innerHTML = `
+    <svg class="beach-wind-marker-icon" viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate(${windDirection}deg)">
+      <path d="M12 4v14" />
+      <path d="M6.5 9.5 12 4l5.5 5.5" />
+    </svg>
+    <span class="beach-wind-marker-speed">${formatWindSpeed(windSpeed)} km/h</span>
+  `
+  return el
+}
+
+function formatWindSpeed(value: number) {
+  return Number.isFinite(value) ? value.toFixed(0) : '0'
+}
+
+function clearWindMarkers() {
+  windMarkers.forEach(marker => marker.remove())
+  windMarkers.clear()
+}
+
+function shouldShowWindMarkers() {
+  return !!map && map.getZoom() >= WIND_MARKER_MIN_ZOOM
+}
+
+function updateWindMarkers() {
+  if (!map) return
+
+  clearWindMarkers()
+  if (!shouldShowWindMarkers()) return
+
+  props.beaches.forEach(beach => {
+    const weather = getBeachWeather(beach.id)
+    const windDirection = weather?.current.wind_direction_10m
+    const windSpeed = weather?.current.wind_speed_10m
+    if (windDirection === undefined || windSpeed === undefined) return
+
+    const marker = new mapboxgl.Marker({
+      element: createWindMarkerElement(windDirection, windSpeed),
+      offset: [32, 22]
+    })
+      .setLngLat([beach.lng, beach.lat])
+      .addTo(map!)
+
+    windMarkers.set(beach.id, marker)
+  })
 }
 
 function closeWeather() {
@@ -230,11 +277,14 @@ function fitBounds() {
     bottomPadding = 60
   }
 
+  const topPadding = props.fitBoundsPaddingTop ?? 180
+  bottomPadding = props.fitBoundsPaddingBottom ?? bottomPadding
+
   map.fitBounds(bounds, {
     padding: {
-      top: 180,
+      top: topPadding,
       bottom: bottomPadding,
-      left: 45,
+      left: props.fitBoundsPaddingLeft,
       right: 45
     },
     animate: true,
@@ -246,8 +296,11 @@ function fitBounds() {
 function focusOnBeach(beach: Beach) {
   if (!map) return
 
+  const overlayOffsetY = -Math.max(0, ((props.fitBoundsPaddingBottom ?? 60) - 60) / 2)
+
   map.flyTo({
     center: [beach.lng, beach.lat],
+    offset: [0, overlayOffsetY],
     zoom: 14.5,
     duration: 1000
   })
@@ -323,10 +376,12 @@ defineExpose({
 
 watch(() => props.beaches, () => {
   updateMarkers()
+  updateWindMarkers()
 }, { deep: true })
 
 watch(beachesWeather, () => {
   updateMarkers(shouldFitBoundsForWeatherRefresh())
+  updateWindMarkers()
 })
 
 watch(() => props.isProvisional, () => {
@@ -370,6 +425,7 @@ onMounted(() => {
     map.on('load', () => {
       if (!map) return
       updateMarkers()
+      updateWindMarkers()
       // Force Mapbox resize immediately and after page transition (400ms)
       map.resize()
       safeSetTimeout(() => {
@@ -380,6 +436,7 @@ onMounted(() => {
         fitBounds()
       }, 500)
     })
+    map.on('zoomend', updateWindMarkers)
 
     window.addEventListener('resize', onResize)
     mapContainer.value.addEventListener('click', handlePopupLinkClick)
@@ -402,6 +459,7 @@ onUnmounted(() => {
   // Explicitly remove all markers to break references and event listeners
   markers.forEach(marker => marker.remove())
   markers.clear()
+  clearWindMarkers()
 
   if (map) {
     map.remove()
@@ -520,6 +578,32 @@ function onResize() {
   border-radius: 50%;
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
   animation: pulse-dot 1.8s infinite ease-in-out;
+}
+
+.beach-wind-marker {
+  opacity: 0.5;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #232323;
+  pointer-events: none;
+}
+
+.beach-wind-marker-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.8;
+  transform-origin: center;
+}
+
+.beach-wind-marker-speed {
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 @keyframes pulse-dot {

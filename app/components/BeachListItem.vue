@@ -54,6 +54,7 @@ import { computed } from 'vue'
 import { AlertTriangle, Sun, Wind } from '@lucide/vue'
 import type { Beach } from '~/types/beach'
 import type { BeachWeatherItem } from '~/types/beachWeather'
+import { getBeachStatusCardClass } from '~/utils/beachStatusStyles'
 
 const props = defineProps<{
   beach: Beach
@@ -124,12 +125,7 @@ function getStatusText(state: string) {
 }
 
 function getCardClass(state: string) {
-  const s = state.toLowerCase()
-  if (s === 'verde') return 'bg-emerald-600'
-  if (s === 'amarilla') return 'bg-yellow-500'
-  if (s === 'amarilla_por_medusa') return 'bg-orange-500'
-  if (s === 'roja') return 'bg-red-600'
-  return 'bg-slate-500'
+  return getBeachStatusCardClass(state)
 }
 
 function getWeatherImage(code?: number, isDay = true) {

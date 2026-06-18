@@ -80,6 +80,16 @@
                 <path :d="chartPoints.areaPath" fill="url(#areaGrad)" />
                 <!-- Stroke path -->
                 <path :d="chartPoints.linePath" fill="none" stroke="rgba(255, 255, 255, 0.75)" stroke-width="3" stroke-linecap="round" />
+                <!-- UV curve, colored by risk band -->
+                <path
+                  v-for="(segment, idx) in chartPoints.uvSegments"
+                  :key="`uv-${idx}`"
+                  :d="segment.path"
+                  fill="none"
+                  :stroke="segment.color"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
                 <!-- Current Hour Vertical Indicator -->
                 <line 
                   v-if="currentHourIndex !== -1"
@@ -96,6 +106,13 @@
                   <circle :cx="pt.x" :cy="pt.y" r="4" fill="#ffffff" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2.5" />
                   <text :x="pt.x" :y="pt.y - 12" fill="white" font-size="14" font-weight="900" text-anchor="middle">
                     {{ pt.temp.toFixed(1) }}°
+                  </text>
+                </g>
+                <!-- UV points and labels -->
+                <g v-for="(pt, idx) in chartPoints.uvCoords" :key="`uv-point-${idx}`">
+                  <circle :cx="pt.x" :cy="pt.y" r="4" :fill="pt.color" stroke="rgba(255, 255, 255, 0.55)" stroke-width="2" />
+                  <text :x="pt.x" :y="pt.y + 17" :fill="pt.color" font-size="11" font-weight="900" text-anchor="middle">
+                    UV {{ formatMaxDecimals(pt.uv, 1) }}
                   </text>
                 </g>
               </svg>
@@ -485,6 +502,7 @@ const hourlyForecast = computed(() => {
     weatherCode: h.weather_code?.[idx] ?? 0,
     windSpeed: h.wind_speed_10m?.[idx] ?? 0,
     windDir: h.wind_direction_10m?.[idx] ?? 0,
+    uvIndex: h.uv_index?.[idx] ?? 0,
     isDayVal: h.is_day?.[idx] === 1
   }))
 })
@@ -497,10 +515,18 @@ function getWeatherDescription(code: number, _isDayVal?: boolean) {
   return t(getWeatherDescriptionKeyFromCode(code))
 }
 
+function getUvRiskColor(value: number) {
+  if (value <= 2) return '#34d399'
+  if (value <= 5) return '#facc15'
+  if (value <= 7) return '#fb923c'
+  if (value <= 10) return '#f87171'
+  return '#c084fc'
+}
+
 // Graph calculations
 const chartPoints = computed(() => {
   const data = hourlyForecast.value
-  if (!data.length) return { linePath: '', areaPath: '', coords: [] }
+  if (!data.length) return { linePath: '', areaPath: '', coords: [], uvCoords: [], uvSegments: [] }
 
   const temps = data.map(d => d.temp)
   const minTemp = Math.min(...temps)
@@ -519,6 +545,24 @@ const chartPoints = computed(() => {
     return { x, y, temp: d.temp }
   })
 
+  const uvTopPadding = 34
+  const uvBottomPadding = 16
+  const uvGraphHeight = height - uvTopPadding - uvBottomPadding
+  const maxUv = Math.max(11, ...data.map(d => d.uvIndex))
+  const uvCoords = data.map((d, i) => {
+    const uv = d.uvIndex
+    const x = i * colWidth + colWidth / 2
+    const y = uvTopPadding + uvGraphHeight - (uv / maxUv) * uvGraphHeight
+    return { x, y, uv, color: getUvRiskColor(uv) }
+  })
+  const uvSegments = uvCoords.slice(1).map((pt, index) => {
+    const prev = uvCoords[index]
+    return {
+      path: `M ${prev.x},${prev.y} L ${pt.x},${pt.y}`,
+      color: getUvRiskColor(Math.max(prev.uv, pt.uv))
+    }
+  })
+
   // Stroke path string
   const linePath = coords.map(c => `${c.x},${c.y}`).join(' L ')
   
@@ -530,7 +574,9 @@ const chartPoints = computed(() => {
   return {
     linePath: `M ${linePath}`,
     areaPath,
-    coords
+    coords,
+    uvCoords,
+    uvSegments
   }
 })
 

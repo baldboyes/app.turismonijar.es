@@ -1,5 +1,6 @@
 import type { Beach } from '~/types/beach'
 import type { BeachWeatherItem } from '~/types/beachWeather'
+import { getBeachStatusPopupClass } from '~/utils/beachStatusStyles'
 
 export function escapeHtml(value: unknown) {
   return String(value ?? '')
@@ -21,13 +22,7 @@ export function escapeCssUrl(value: unknown) {
 }
 
 export function getStatusBgClass(state: string) {
-  switch (state.toLowerCase()) {
-    case 'verde': return 'bg-status-verde'
-    case 'amarilla': return 'bg-status-amarilla text-gray-900'
-    case 'amarilla_por_medusa': return 'bg-status-medusa'
-    case 'roja': return 'bg-status-roja'
-    default: return 'bg-gray-500'
-  }
+  return getBeachStatusPopupClass(state)
 }
 
 export function getCurrentUv(weather?: BeachWeatherItem) {

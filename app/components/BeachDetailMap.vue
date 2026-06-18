@@ -8,6 +8,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { getBeachStatusCssColor } from '~/utils/beachStatusStyles'
 
 const props = defineProps<{
   lat: number
@@ -32,17 +33,6 @@ function safeSetTimeout(fn: () => void, delay: number) {
 }
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmFsZGJveSIsImEiOiJhMzBzeklzIn0.buJ1PP9-a9JkqNWGHW-H0g'
-
-function getColorByState(state?: string) {
-  if (!state) return '#6c757d'
-  switch (state.toLowerCase()) {
-    case 'verde': return '#28a745'
-    case 'amarilla': return '#ffc107'
-    case 'amarilla_por_medusa': return '#ff8c00'
-    case 'roja': return '#dc3545'
-    default: return '#6c757d'
-  }
-}
 
 function createFlagMarker(state?: string, isFull?: boolean) {
   const el = document.createElement('div')
@@ -78,7 +68,7 @@ function createFlagMarker(state?: string, isFull?: boolean) {
       svgPath = '/banderas/estados/roja_.svg'
       break
     default:
-      const color = getColorByState(state)
+      const color = getBeachStatusCssColor(state)
       el.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 30 30">
           <circle cx="15" cy="15" r="12" fill="${color}" stroke="white" stroke-width="2"/>

@@ -4,7 +4,7 @@
       <div :class="homeLayoutClass">
         <aside
           v-if="isSplitHomeLayout"
-          class="relative z-10 flex h-[100dvh] w-[min(420px,42vw)] min-w-80 flex-col overflow-hidden bg-white/95 shadow-xl backdrop-blur-xl"
+          class="absolute inset-y-10 left-10 z-10 flex w-[min(420px,42vw)] min-w-80 flex-col overflow-hidden rounded-[2rem] bg-white/95 shadow-2xl backdrop-blur-xl"
         >
           <div class="shrink-0 border-b border-slate-100/80 px-4 pb-4 pt-[calc(var(--safe-area-inset-top,0px)+1rem)]">
             <div class="flex max-w-full items-center gap-2 overflow-hidden">
@@ -36,6 +36,9 @@
             :beaches="beaches"
             :selected-beach-id="selectedBeachId"
             :drawer-state="mapDrawerState"
+            :fit-bounds-padding-top="mapFitBoundsPaddingTop"
+            :fit-bounds-padding-bottom="mapFitBoundsPaddingBottom"
+            :fit-bounds-padding-left="mapFitBoundsPaddingLeft"
             :is-provisional="isProvisional"
             @marker-click="handleMarkerClick"
             @deselect="selectedBeachId = null"
@@ -124,6 +127,9 @@
   import type { Beach } from '~/types/beach';
   import {
     createBeachListStateController,
+    getHomeSplitMapLeftPadding,
+    HOME_SPLIT_MAP_PADDING_BOTTOM,
+    HOME_SPLIT_MAP_PADDING_TOP,
     shouldHideWeatherPanel,
     shouldMountBeachListDrawer,
     shouldUseHomeSplitLayout,
@@ -169,13 +175,19 @@
 
   const isSplitHomeLayout = computed(() => shouldUseHomeSplitLayout(viewportWidth.value, viewportHeight.value))
   const homeLayoutClass = computed(() => isSplitHomeLayout.value
-    ? 'relative flex h-[100dvh] w-full overflow-hidden bg-[#f9fafb]'
+    ? 'relative h-[100dvh] w-full overflow-hidden bg-[#f9fafb]'
     : 'absolute inset-0 h-full w-full'
   )
   const mapPaneClass = computed(() => isSplitHomeLayout.value
-    ? 'relative h-[100dvh] min-w-0 flex-1'
+    ? 'absolute inset-0 h-full w-full'
     : 'absolute inset-0 h-full w-full'
   )
+  const mapFitBoundsPaddingLeft = computed(() => isSplitHomeLayout.value
+    ? getHomeSplitMapLeftPadding(viewportWidth.value)
+    : 45
+  )
+  const mapFitBoundsPaddingTop = computed(() => isSplitHomeLayout.value ? HOME_SPLIT_MAP_PADDING_TOP : undefined)
+  const mapFitBoundsPaddingBottom = computed(() => isSplitHomeLayout.value ? HOME_SPLIT_MAP_PADDING_BOTTOM : undefined)
   const mapDrawerState = computed<DrawerState>(() => isSplitHomeLayout.value ? 'full' : drawerState.value)
   const shouldMountDrawer = computed(() => shouldMountBeachListDrawer(isBeachListMounted.value))
   const shouldHideWeather = computed(() => shouldHideWeatherPanel(isBeachListVisible.value, isSplitHomeLayout.value))
