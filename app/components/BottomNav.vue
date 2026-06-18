@@ -1,7 +1,7 @@
 <template>
   <nav 
     v-bind="filteredAttrs"
-    class="fixed bottom-0 left-0 z-[9999] flex w-full max-w-none translate-x-0 items-center justify-center rounded-none bg-primary px-2 pb-[calc(0.75rem+var(--safe-area-inset-bottom))] pt-3 shadow-[0_10px_30px_rgba(0,0,0,0.15)] transition-all duration-300 md:bottom-6 md:left-1/2 md:w-auto md:max-w-[95vw] md:-translate-x-1/2 md:rounded-3xl md:p-2 md:hover:scale-[1.01]"
+    class="fixed bottom-0 left-0 flex w-full max-w-none translate-x-0 items-center justify-center rounded-none bg-primary px-2 pb-[calc(0.75rem+var(--safe-area-inset-bottom))] pt-3 shadow-[0_10px_30px_rgba(0,0,0,0.15)] transition-all duration-300 md:bottom-6 md:left-1/2 md:w-auto md:max-w-[95vw] md:-translate-x-1/2 md:rounded-3xl md:p-2 md:hover:scale-[1.01]"
   >
     <div ref="containerRef" class="relative flex w-auto items-center justify-center gap-3 sm:gap-4 md:gap-4">
       <div 

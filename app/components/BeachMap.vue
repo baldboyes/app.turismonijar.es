@@ -50,13 +50,15 @@ const props = withDefaults(defineProps<{
   fitBoundsPaddingBottom?: number
   fitBoundsPaddingLeft?: number
   isProvisional?: boolean
+  externalWeatherDetail?: boolean
 }>(), {
   drawerState: 'peek',
   fitBoundsPaddingLeft: 45,
-  isProvisional: false
+  isProvisional: false,
+  externalWeatherDetail: false
 })
 
-const emit = defineEmits(['marker-click', 'deselect'])
+const emit = defineEmits(['marker-click', 'deselect', 'weather-click'])
 
 const mapContainer = ref<HTMLElement | null>(null)
 const selectedWeather = ref<BeachWeatherItem | null>(null)
@@ -113,8 +115,8 @@ function createFlagMarker(state: string, isFull?: boolean) {
       const color = getBeachStatusCssColor(state)
       el.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 30 30">
-          <circle cx="15" cy="15" r="12" fill="${color}" stroke="white" stroke-width="2"/>
-          <circle cx="15" cy="15" r="8" fill="${color}" opacity="0.8"/>
+          <circle cx="15" cy="15" r="14" fill="${color}" stroke="white" stroke-width="2"/>
+          <circle cx="15" cy="15" r="9" fill="${color}" opacity="0.8"/>
         </svg>
       `
       el.style.cursor = 'pointer'
@@ -146,11 +148,12 @@ function appendRedDot(parent: HTMLElement) {
 
 function createWindMarkerElement(windDirection: number, windSpeed: number) {
   const el = document.createElement('div')
+  const windFlowDirection = (windDirection + 180) % 360
   el.className = 'beach-wind-marker'
   el.setAttribute('aria-hidden', 'true')
   el.title = `${formatWindSpeed(windSpeed)} km/h`
   el.innerHTML = `
-    <svg class="beach-wind-marker-icon" viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate(${windDirection}deg)">
+    <svg class="beach-wind-marker-icon" viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate(${windFlowDirection}deg)">
       <path d="M12 4v14" />
       <path d="M6.5 9.5 12 4l5.5 5.5" />
     </svg>
@@ -487,6 +490,10 @@ function handlePopupLinkClick(e: MouseEvent) {
 
     const weather = getBeachWeather(beachId)
     if (weather) {
+      if (props.externalWeatherDetail) {
+        emit('weather-click', beachId)
+        return
+      }
       selectedWeather.value = weather
     }
   }

@@ -9,7 +9,7 @@
     ]"
     :style="isDetailOpen
       ? { top: '0px', left: '0px', width: '100vw', height: '100vh', borderRadius: '0px' }
-      : { top: 'calc(var(--safe-area-inset-top, 0px) + 16px)', left: '16px', width: '224px', height: '104px', borderRadius: '24px' }"
+      : fixedCardStyle"
     @click="!isDetailOpen && openDetail()"
   >
       <!-- Animated Dynamic Weather Background -->
@@ -131,6 +131,28 @@ import TiempoDetalleModal from './TiempoDetalleModal.vue'
 
 const { t } = useI18n()
 
+const props = withDefaults(defineProps<{
+  position?: 'default' | 'split-map'
+  externalDetail?: boolean
+}>(), {
+  position: 'default',
+  externalDetail: false
+})
+
+const emit = defineEmits(['open-detail'])
+
+const fixedCardStyle = computed(() => ({
+  top: props.position === 'split-map'
+    ? 'calc(var(--safe-area-inset-top, 0px) + 56px)'
+    : 'calc(var(--safe-area-inset-top, 0px) + 16px)',
+  left: props.position === 'split-map'
+    ? 'calc(2.5rem + min(420px, 42vw) + 16px)'
+    : '16px',
+  width: '224px',
+  height: '104px',
+  borderRadius: '24px'
+}))
+
 const isDarkerBoxes = computed(() => {
   return isDay.value && (weatherState.value === 'cloudy' || weatherState.value === 'rainy')
 })
@@ -191,6 +213,11 @@ const isDetailOpen = ref(false)
 const showDetailsContent = ref(false)
 
 function openDetail() {
+  if (props.externalDetail) {
+    emit('open-detail')
+    return
+  }
+
   if (!isLoading.value && aggregateWeatherData.value) {
     isDetailOpen.value = true
     setTimeout(() => {

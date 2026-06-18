@@ -47,6 +47,10 @@ export function shouldHideWeatherPanel(isBeachListVisible: boolean, isSplitLayou
   return isSplitLayout || isBeachListVisible
 }
 
+export function getSplitWeatherTitle(selectedBeachTitle: string | undefined, selectedWeatherName: string | undefined, fallbackTitle: string) {
+  return selectedBeachTitle ?? selectedWeatherName ?? fallbackTitle
+}
+
 export function createBeachListStateController(
   refs: BeachListStateRefs,
   options: BeachListStateOptions

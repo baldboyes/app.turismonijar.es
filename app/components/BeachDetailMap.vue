@@ -71,7 +71,7 @@ function createFlagMarker(state?: string, isFull?: boolean) {
       const color = getBeachStatusCssColor(state)
       el.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 30 30">
-          <circle cx="15" cy="15" r="12" fill="${color}" stroke="white" stroke-width="2"/>
+          <circle cx="15" cy="15" r="14" fill="${color}" stroke="white" stroke-width="2"/>
         </svg>
       `
       el.style.cursor = 'pointer'

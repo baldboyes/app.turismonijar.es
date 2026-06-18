@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createBeachListStateController,
+  getSplitWeatherTitle,
   getHomeSplitMapLeftPadding,
   HOME_SPLIT_MAP_PADDING_BOTTOM,
   HOME_SPLIT_MAP_PADDING_TOP,
@@ -49,6 +50,12 @@ describe('beach list drawer state', () => {
     expect(getHomeSplitMapLeftPadding(1280)).toBe(500)
     expect(HOME_SPLIT_MAP_PADDING_TOP).toBe(90)
     expect(HOME_SPLIT_MAP_PADDING_BOTTOM).toBe(160)
+  })
+
+  it('uses the selected beach title before stale weather data names', () => {
+    expect(getSplitWeatherTitle('Los Genoveses', 'Monsul', 'Tiempo')).toBe('Los Genoveses')
+    expect(getSplitWeatherTitle(undefined, 'Monsul', 'Tiempo')).toBe('Monsul')
+    expect(getSplitWeatherTitle(undefined, undefined, 'Tiempo')).toBe('Tiempo')
   })
 
   it('mounts the drawer and declares mid as the target state when opening from the top toggle', () => {

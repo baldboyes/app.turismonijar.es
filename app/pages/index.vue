@@ -40,10 +40,39 @@
             :fit-bounds-padding-bottom="mapFitBoundsPaddingBottom"
             :fit-bounds-padding-left="mapFitBoundsPaddingLeft"
             :is-provisional="isProvisional"
+            :external-weather-detail="true"
             @marker-click="handleMarkerClick"
+            @weather-click="openSplitWeather"
             @deselect="selectedBeachId = null"
           />
         </div>
+
+        <Transition name="weather-fade">
+          <div
+            v-if="isMounted && !isLoading && !isError && splitWeatherOpen && splitWeatherData"
+            class="fixed inset-0 z-[9] h-screen w-screen overflow-y-auto text-white"
+            @click="closeSplitWeather"
+          >
+            <WeatherBackground
+              :weather-state="selectedWeatherState"
+              :is-day="splitWeatherData.current.is_day === 1"
+              :is-fixed="true"
+            />
+            <TiempoDetalleModal
+              :weather-data="splitWeatherData"
+              :title="splitWeatherTitle"
+              :is-refreshing="isWeatherRefreshing"
+              :is-error="isWeatherError"
+              :last-update="weatherLastUpdate"
+              :layout="isSplitHomeLayout ? 'split-map' : 'default'"
+              :beaches="isSplitHomeLayout ? [] : beaches"
+              :selected-beach-id="selectedBeachId"
+              class="relative z-10"
+              @close="closeSplitWeather"
+              @select-beach="selectWeatherBeach"
+            />
+          </div>
+        </Transition>
 
         <!-- Loading overlay -->
         <LoadingOverlay :visible="isLoading" />
@@ -53,7 +82,7 @@
       </div>
     </ion-content>
     
-    <Teleport to="body" v-if="isMounted && !isLoading && !isError && !isSplitHomeLayout">
+    <Teleport to="body" v-if="isMounted && !isLoading && !isError && !isSplitHomeLayout && !splitWeatherOpen">
       <button
         type="button"
         class="fixed z-50 box-border inline-flex size-12 min-h-12 min-w-12 max-h-12 max-w-12 appearance-none items-center justify-center overflow-hidden !rounded-full bg-white p-0 text-primary shadow-lg backdrop-blur transition hover:bg-white/90"
@@ -69,7 +98,12 @@
 
     <Teleport to="body" v-if="isMounted && !isLoading && !isError">
       <Transition name="weather-fade">
-        <TiempoPortada v-if="!shouldHideWeather" />
+        <TiempoPortada
+          v-if="!shouldHideWeather"
+          :position="isSplitHomeLayout ? 'split-map' : 'default'"
+          :external-detail="true"
+          @open-detail="openSplitWeather()"
+        />
       </Transition>
     </Teleport>
 
@@ -116,18 +150,22 @@
 </style>
 
 <script setup lang="ts">
-  import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+  import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
   import { IonContent, IonPage } from '@ionic/vue';
   import { MapPinSearch, X } from '@lucide/vue';
   import CustomDrawer from '@/components/CustomDrawer.vue';
   import BeachMap from '@/components/BeachMap.vue';
   import BeachList from '@/components/BeachList.vue';
+  import TiempoDetalleModal from '@/components/TiempoDetalleModal.vue';
+  import WeatherBackground from '@/components/WeatherBackground.vue';
   import LoadingOverlay from '@/components/LoadingOverlay.vue';
   import ErrorOverlay from '@/components/ErrorOverlay.vue';
   import type { Beach } from '~/types/beach';
+  import type { WeatherState } from '~/composables/useWeather';
   import {
     createBeachListStateController,
     getHomeSplitMapLeftPadding,
+    getSplitWeatherTitle,
     HOME_SPLIT_MAP_PADDING_BOTTOM,
     HOME_SPLIT_MAP_PADDING_TOP,
     shouldHideWeatherPanel,
@@ -138,6 +176,8 @@
   } from './index.mobile-beach-list';
   import { useLocalePath, useSeoMeta, useI18n, useState } from '#imports';
   import { useBeaches } from '~/composables/useBeaches';
+  import { useBeachWeather } from '~/composables/useBeachWeather';
+  import { useBeachWeatherAggregate } from '~/composables/useBeachWeatherAggregate';
 
   const localePath = useLocalePath()
   const { t } = useI18n()
@@ -148,20 +188,36 @@
   const isBeachListVisible = ref(false)
   const drawerTargetState = ref<DrawerTargetState>('peek')
   const selectedBeachId = ref<number | string | null>(null)
+  const splitWeatherOpen = ref(false)
   const viewportWidth = ref(0)
   const viewportHeight = ref(0)
   
   const mapRef = ref<any>(null)
   const drawerRef = ref<any>(null)
 
-  const bottomNavZIndex = useState<number>('bottomNavZIndex')
-  watch(drawerState, (state) => {
-    bottomNavZIndex.value = state === 'full' || isBeachListVisible.value ? 10 : 9999
-  }, { immediate: true })
+  const isSplitHomeLayout = computed(() => shouldUseHomeSplitLayout(viewportWidth.value, viewportHeight.value))
 
-  watch(isBeachListVisible, (isVisible) => {
-    bottomNavZIndex.value = drawerState.value === 'full' || isVisible ? 10 : 9999
-  })
+  const bottomNavZIndex = useState<number>('bottomNavZIndex')
+
+  function updateBottomNavZIndex() {
+    if (splitWeatherOpen.value) {
+      bottomNavZIndex.value = 0
+      return
+    }
+
+    if (isSplitHomeLayout.value) {
+      bottomNavZIndex.value = 9999
+      return
+    }
+
+    bottomNavZIndex.value = drawerState.value === 'full' || isBeachListVisible.value ? 10 : 9999
+  }
+
+  watch(drawerState, updateBottomNavZIndex, { immediate: true })
+
+  watch(isBeachListVisible, updateBottomNavZIndex)
+  watch(splitWeatherOpen, updateBottomNavZIndex)
+  watch(isSplitHomeLayout, updateBottomNavZIndex)
 
   const { 
     beaches, 
@@ -172,8 +228,17 @@
     isError, 
     fetchBeaches 
   } = useBeaches()
+  const {
+    fetchBeachWeather,
+    beachesWeather,
+    getBeachWeather,
+    isRefreshing: isWeatherRefreshing,
+    isError: isWeatherError,
+    lastUpdate: weatherLastUpdate
+  } = useBeachWeather()
+  const beachWeatherItems = computed(() => Object.values(beachesWeather.value))
+  const { aggregateWeatherData } = useBeachWeatherAggregate(() => beachWeatherItems.value)
 
-  const isSplitHomeLayout = computed(() => shouldUseHomeSplitLayout(viewportWidth.value, viewportHeight.value))
   const homeLayoutClass = computed(() => isSplitHomeLayout.value
     ? 'relative h-[100dvh] w-full overflow-hidden bg-[#f9fafb]'
     : 'absolute inset-0 h-full w-full'
@@ -190,7 +255,31 @@
   const mapFitBoundsPaddingBottom = computed(() => isSplitHomeLayout.value ? HOME_SPLIT_MAP_PADDING_BOTTOM : undefined)
   const mapDrawerState = computed<DrawerState>(() => isSplitHomeLayout.value ? 'full' : drawerState.value)
   const shouldMountDrawer = computed(() => shouldMountBeachListDrawer(isBeachListMounted.value))
-  const shouldHideWeather = computed(() => shouldHideWeatherPanel(isBeachListVisible.value, isSplitHomeLayout.value))
+  const selectedWeather = computed(() => selectedBeachId.value === null ? undefined : getBeachWeather(selectedBeachId.value))
+  const selectedBeach = computed(() => selectedBeachId.value === null
+    ? undefined
+    : beaches.value.find(item => String(item.id) === String(selectedBeachId.value))
+  )
+  const splitWeatherData = computed(() => selectedWeather.value ?? aggregateWeatherData.value)
+  const splitWeatherTitle = computed(() => getSplitWeatherTitle(
+    selectedBeach.value?.title,
+    selectedWeather.value?.nombre,
+    t('weather.details_title')
+  ))
+  const shouldHideWeather = computed(() => splitWeatherOpen.value && !!splitWeatherData.value
+    ? true
+    : shouldHideWeatherPanel(isBeachListVisible.value, isSplitHomeLayout.value)
+  )
+  const selectedWeatherState = computed<WeatherState>(() => {
+    const code = splitWeatherData.value?.current.weather_code
+    if (code === undefined || code === null) return 'sunny'
+
+    if (code === 0 || code === 1) return 'sunny'
+    if (code === 2 || code === 3 || code === 45 || code === 48) return 'cloudy'
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99)) return 'rainy'
+    if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'snowy'
+    return 'sunny'
+  })
   const formattedSplitHeaderDate = computed(() => {
     if (!lastModified.value || lastModified.value.length < 12) return t('drawer.explore_fallback')
     const year = lastModified.value.substring(0, 4)
@@ -211,6 +300,30 @@
     selectedBeachId.value = beach.id
     if (drawerRef.value && drawerState.value === 'full') {
       drawerRef.value.setState('peek')
+    }
+  }
+
+  function openSplitWeather(beachId?: string | number) {
+    if (beachId !== undefined) {
+      selectedBeachId.value = beachId
+    } else {
+      selectedBeachId.value = null
+    }
+    splitWeatherOpen.value = true
+  }
+
+  function closeSplitWeather() {
+    splitWeatherOpen.value = false
+  }
+
+  async function selectWeatherBeach(beachId: string | number) {
+    const beach = beaches.value.find(item => String(item.id) === String(beachId))
+    if (!beach) return
+
+    selectedBeachId.value = beach.id
+    await nextTick()
+    if (mapRef.value) {
+      mapRef.value.focusOnBeach(beach)
     }
   }
 
@@ -248,6 +361,7 @@
     updateViewportSize()
     window.addEventListener('resize', updateViewportSize)
     await fetchBeaches()
+    await fetchBeachWeather()
   })
 
   onUnmounted(() => {

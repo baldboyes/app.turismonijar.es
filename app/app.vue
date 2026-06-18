@@ -5,7 +5,7 @@
     </NuxtLayout>
     <ClientOnly>
       <Teleport to="body">
-        <BottomNav :style="{ zIndex: bottomNavZIndex }" />
+        <BottomNav :style="bottomNavStyle" />
       </Teleport>
     </ClientOnly>
   </ion-app>
@@ -21,6 +21,11 @@
   const { t } = useI18n()
   const appTitle = computed(() => t('seo.app.title'))
   const bottomNavZIndex = useState('bottomNavZIndex', () => 9999)
+  const bottomNavStyle = computed(() => ({
+    zIndex: bottomNavZIndex.value,
+    opacity: bottomNavZIndex.value <= 0 ? 0 : 1,
+    pointerEvents: bottomNavZIndex.value <= 0 ? 'none' : 'auto'
+  }))
 
   onMounted(async () => {
     if (import.meta.client) {

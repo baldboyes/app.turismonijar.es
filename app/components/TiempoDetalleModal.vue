@@ -3,6 +3,7 @@
     v-if="displayWeatherData"
     class="w-full flex flex-col select-none relative text-white"
     :class="{ 'theme-darker-boxes': isDarkerBoxes }"
+    @pointerdown="closeBeachSelector"
     @click.stop
   >
       <!-- Background Decorative Blobs for Ambient Glow -->
@@ -22,18 +23,66 @@
       </div>
 
       <!-- Content Container -->
-      <div class="relative z-10 w-full max-w-lg mx-auto flex flex-col min-h-full px-4 pt-safe pb-8 gap-6 content-container">
+      <div :class="contentContainerClass" :style="contentContainerStyle">
         
         <!-- Header -->
-        <header class="flex items-center justify-between pt-4 stagger-item stagger-header">
-          <div class="flex items-start gap-2">
-            <MapPin class="w-4 h-4 text-white/90 mt-0.5" />
-            <div class="flex flex-col gap-0.5">
-              <span class="text-sm font-extrabold tracking-wide uppercase">{{ title }}</span>
-              <span class="text-[9px] text-white/70 font-mono uppercase tracking-widest leading-none">
-                {{ t('weather.last_update_label') }} {{ displayWeatherData?.current?.time ? displayWeatherData.current.time.slice(11, 16) : '' }}
+        <header class="relative z-[500] flex items-center justify-between pt-4 stagger-item stagger-header">
+          <div class="relative z-[500] min-w-0">
+            <button
+              v-if="canSelectBeach"
+              type="button"
+              class="weather-selector-trigger"
+              :class="{ 'weather-selector-trigger--open': isBeachSelectorOpen }"
+              :aria-expanded="isBeachSelectorOpen"
+              @pointerdown.stop
+              @click.stop="isBeachSelectorOpen = !isBeachSelectorOpen"
+            >
+              <span v-if="selectedBeach" class="relative mt-0.5 flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
+                <span class="size-4 rounded-full ring-2 ring-white shadow-sm" :style="getBeachFlagStyle(selectedBeach.state)" />
+                <span v-if="isParkingFull(selectedBeach)" class="weather-selector-parking-alert" />
               </span>
+              <MapPin v-else class="mt-0.5 size-4 shrink-0 text-[#232323]" />
+              <span class="flex min-w-0 flex-col gap-0.5">
+                <span class="flex min-w-0 items-center gap-1.5 text-sm font-extrabold uppercase tracking-wide">
+                  <span class="truncate">{{ title }}</span>
+                  <ChevronDown class="size-4 shrink-0 transition-transform" :class="{ 'rotate-180': isBeachSelectorOpen }" />
+                </span>
+                <span class="text-[9px] font-mono uppercase leading-none tracking-widest text-[#232323]/70">
+                  {{ t('weather.last_update_label') }} {{ displayWeatherData?.current?.time ? displayWeatherData.current.time.slice(11, 16) : '' }}
+                </span>
+              </span>
+            </button>
+            <div v-else class="flex items-start gap-2">
+              <MapPin class="w-4 h-4 text-white/90 mt-0.5" />
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <span class="text-sm font-extrabold tracking-wide uppercase">{{ title }}</span>
+                <span class="text-[9px] text-white/70 font-mono uppercase tracking-widest leading-none">
+                  {{ t('weather.last_update_label') }} {{ displayWeatherData?.current?.time ? displayWeatherData.current.time.slice(11, 16) : '' }}
+                </span>
+              </div>
             </div>
+              <div
+                v-if="canSelectBeach && isBeachSelectorOpen"
+                class="weather-selector-dropdown absolute left-0 top-full z-[1000] max-h-90 space-y-0 overflow-y-auto bg-white px-4 pt-2 text-[#232323] shadow-2xl"
+                @pointerdown.stop
+                @click.stop
+              >
+                <button
+                  v-for="beach in beaches"
+                  :key="beach.id"
+                  type="button"
+                  class="flex min-h-10 w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-bold"
+                  @click="selectBeach(beach.id)"
+                >
+                  <span class="flex min-w-0 items-center gap-3">
+                    <span class="relative flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
+                      <span class="size-4 rounded-full ring-2 ring-white shadow-sm" :style="getBeachFlagStyle(beach.state)" />
+                      <span v-if="isParkingFull(beach)" class="weather-selector-parking-alert" />
+                    </span>
+                    <span class="truncate">{{ beach.title }}</span>
+                  </span>
+                </button>
+              </div>
           </div>
           <!-- Spacer to maintain layout balance -->
           <div class="w-9 h-9"></div>
@@ -49,7 +98,7 @@
               class="w-24 h-24 object-contain filter animate-float" 
             />
             <div class="text-6xl font-black leading-none relative">
-              {{ temperature.toFixed(0) }}<span class="text-5xl absolute font-semibold">°</span>
+              {{ animatedTemperature }}<span class="text-5xl absolute font-semibold">°</span>
             </div>
           </div>
           
@@ -166,7 +215,7 @@
               {{ t('weather.uv_index') }}
             </span>
             <div class="mt-3 flex items-center gap-1.5">
-              <span class="text-2xl lg:text-3xl font-black">{{ uv }}</span>
+              <span class="text-2xl lg:text-3xl font-black">{{ animatedUv }}</span>
               <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-white/15">
                 {{ uvLabel }}
               </span>
@@ -183,7 +232,7 @@
               {{ t('weather.wind') }}
             </span>
             <div class="mt-3 flex items-baseline gap-1">
-              <span class="text-2xl lg:text-3xl font-black">{{ windSpeed.toFixed(1) }}</span>
+              <span class="text-2xl lg:text-3xl font-black">{{ animatedWindSpeed.toFixed(1) }}</span>
               <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.windSpeed }}</span>
             </div>
             <div class="-mt-2 pt-2 flex items-center justify-between text-xs text-white/80">
@@ -202,7 +251,7 @@
               {{ t('weather.precipitation') }}
             </span>
             <div class="mt-3 flex items-baseline gap-0.5">
-              <span class="text-2xl lg:text-3xl font-black">{{ displayWeatherData?.current?.precipitation?.toFixed(1) ?? '0.0' }}</span>
+              <span class="text-2xl lg:text-3xl font-black">{{ animatedPrecipitation.toFixed(1) }}</span>
               <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.precipitation }}</span>
             </div>
           </div>
@@ -214,7 +263,7 @@
               {{ t('weather.humidity') }}
             </span>
             <div class="mt-3 flex items-baseline gap-0.5">
-              <span class="text-2xl lg:text-3xl font-black">{{ humidity.toFixed(0) }}</span>
+              <span class="text-2xl lg:text-3xl font-black">{{ animatedHumidity }}</span>
               <span class="text-xs font-semibold text-white/85">{{ WEATHER_UNITS.percent }}</span>
             </div>
           </div>
@@ -284,7 +333,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from '#imports'
 import {
   getWeatherDescriptionKeyFromCode,
@@ -292,6 +341,7 @@ import {
   getWeatherStateFromCode
 } from '~/composables/useBeachWeatherAggregate'
 import type { BeachWeatherItem } from '~/types/beachWeather'
+import { getBeachStatusCssColor } from '~/utils/beachStatusStyles'
 import {
   X,
   Wind,
@@ -301,10 +351,15 @@ import {
   Sunset,
   CloudRain,
   ArrowUp,
-  MapPin
+  MapPin,
+  ChevronDown
 } from '@lucide/vue'
+import type { Beach } from '~/types/beach'
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+  close: []
+  'select-beach': [beachId: string | number]
+}>()
 
 const props = defineProps<{
   weatherData?: BeachWeatherItem
@@ -312,6 +367,9 @@ const props = defineProps<{
   isRefreshing?: boolean
   isError?: boolean
   lastUpdate?: number | null
+  layout?: 'default' | 'split-map'
+  beaches?: Beach[]
+  selectedBeachId?: string | number | null
 }>()
 
 const scrollContainer = ref<HTMLElement | null>(null)
@@ -332,6 +390,46 @@ onMounted(() => {
 const { t } = useI18n()
 
 const title = computed(() => props.title || t('weather.details_title'))
+const beaches = computed(() => props.beaches ?? [])
+const selectedBeachId = computed(() => props.selectedBeachId ?? null)
+const selectedBeach = computed(() => selectedBeachId.value === null
+  ? undefined
+  : beaches.value.find(beach => String(beach.id) === String(selectedBeachId.value))
+)
+const canSelectBeach = computed(() => props.layout !== 'split-map' && beaches.value.length > 0)
+const isBeachSelectorOpen = ref(false)
+
+function selectBeach(beachId: string | number) {
+  isBeachSelectorOpen.value = false
+  emit('select-beach', beachId)
+}
+
+function closeBeachSelector() {
+  isBeachSelectorOpen.value = false
+}
+
+function getBeachFlagStyle(state?: string) {
+  return { backgroundColor: getBeachStatusCssColor(state) }
+}
+
+function isParkingFull(beach: Beach) {
+  return beach.ocupacion?.state === 'red'
+}
+
+const contentContainerClass = computed(() => [
+  'relative z-10 flex min-h-full flex-col gap-6 pt-safe pb-8 content-container',
+  props.layout === 'split-map'
+    ? 'split-weather-content max-w-none items-center px-6 lg:px-10'
+    : 'w-full max-w-lg mx-auto px-4'
+])
+
+const contentContainerStyle = computed(() => props.layout === 'split-map'
+  ? {
+      marginLeft: 'calc(2.5rem + min(420px, 42vw))',
+      width: 'calc(100% - (2.5rem + min(420px, 42vw)))'
+    }
+  : undefined
+)
 
 const displayWeatherData = computed(() => props.weatherData)
 const isRefreshing = computed(() => props.isRefreshing ?? false)
@@ -345,13 +443,74 @@ const temperature = computed(() => {
   return displayWeatherData.value?.current?.temperature_2m ?? 0
 })
 
+const animationTimers = new Set<ReturnType<typeof setInterval>>()
+
+function roundToPrecision(value: number, precision: number) {
+  const factor = 10 ** precision
+  return Math.round(value * factor) / factor
+}
+
+function useAnimatedNumber(source: () => number, options: { precision?: number, step?: number, interval?: number } = {}) {
+  const precision = options.precision ?? 0
+  const step = options.step ?? 1
+  const interval = options.interval ?? 45
+  const value = ref(roundToPrecision(source(), precision))
+  let initialized = false
+  let timer: ReturnType<typeof setInterval> | null = null
+
+  function clearTimer() {
+    if (!timer) return
+    clearInterval(timer)
+    animationTimers.delete(timer)
+    timer = null
+  }
+
+  watch(source, (rawTarget) => {
+    const target = roundToPrecision(rawTarget, precision)
+    clearTimer()
+
+    if (!initialized) {
+      value.value = target
+      initialized = true
+      return
+    }
+
+    if (value.value === target) return
+
+    timer = setInterval(() => {
+      const direction = value.value < target ? 1 : -1
+      const next = roundToPrecision(value.value + direction * step, precision)
+      value.value = direction > 0 ? Math.min(next, target) : Math.max(next, target)
+
+      if (value.value === target) {
+        clearTimer()
+      }
+    }, interval)
+    animationTimers.add(timer)
+  }, { immediate: true })
+
+  return value
+}
+
+const animatedTemperature = useAnimatedNumber(() => Math.round(temperature.value))
+
 const windSpeed = computed(() => {
   return displayWeatherData.value?.current?.wind_speed_10m ?? 0
 })
 
+const animatedWindSpeed = useAnimatedNumber(() => windSpeed.value, { precision: 1, step: 0.2 })
+
 const humidity = computed(() => {
   return displayWeatherData.value?.current?.relative_humidity_2m ?? 0
 })
+
+const animatedHumidity = useAnimatedNumber(() => Math.round(humidity.value))
+
+const precipitation = computed(() => {
+  return displayWeatherData.value?.current?.precipitation ?? 0
+})
+
+const animatedPrecipitation = useAnimatedNumber(() => precipitation.value, { precision: 1, step: 0.1 })
 
 const uv = computed(() => {
   const currentHour = displayWeatherData.value?.current?.time?.slice(0, 13)
@@ -363,6 +522,13 @@ const uv = computed(() => {
     ? hourly?.uv_index?.[hourlyIndex]
     : displayWeatherData.value?.daily?.uv_index_max?.[0]
   return val !== undefined && typeof val === 'number' ? Math.round(val) : 0
+})
+
+const animatedUv = useAnimatedNumber(() => uv.value)
+
+onUnmounted(() => {
+  animationTimers.forEach(timer => clearInterval(timer))
+  animationTimers.clear()
 })
 
 const imgTiempo = computed(() => {
@@ -666,6 +832,68 @@ defineExpose({
 }
 .pt-safe {
   padding-top: var(--safe-area-inset-top);
+}
+
+.split-weather-content > * {
+  width: 100%;
+  max-width: 38rem;
+}
+
+.weather-selector-trigger {
+  display: flex !important;
+  width: min(78vw, 22rem) !important;
+  align-items: flex-start !important;
+  gap: 0.5rem !important;
+  box-sizing: border-box !important;
+  padding: 1rem !important;
+  appearance: none !important;
+  background: #ffffff !important;
+  color: #232323 !important;
+  text-align: left !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.weather-selector-trigger--open {
+  border-bottom: 0 !important;
+  border-radius: 1.5rem 1.5rem 0 0 !important;
+}
+
+.weather-selector-dropdown {
+  width: min(78vw, 22rem) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 0 0 1.5rem 1.5rem !important;
+}
+
+.weather-selector-parking-alert {
+  position: absolute;
+  top: -0.125rem;
+  right: -0.125rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  background-color: #ef4444;
+  border: 2px solid #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  animation: weather-selector-parking-pulse 1.8s infinite ease-in-out;
+}
+
+@keyframes weather-selector-parking-pulse {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+
+  70% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+  }
+
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
 }
 
 /* Darker card boxes for rainy/cloudy day contrast */
