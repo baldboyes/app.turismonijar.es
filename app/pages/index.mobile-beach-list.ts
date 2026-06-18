@@ -44,7 +44,7 @@ export function getHomeSplitMapLeftPadding(width: number) {
 }
 
 export function shouldHideWeatherPanel(isBeachListVisible: boolean, isSplitLayout = false) {
-  return isSplitLayout || isBeachListVisible
+  return !isSplitLayout && isBeachListVisible
 }
 
 export function getSplitWeatherTitle(selectedBeachTitle: string | undefined, selectedWeatherName: string | undefined, fallbackTitle: string) {

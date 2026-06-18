@@ -24,13 +24,14 @@ function createRefs(options: { isMounted?: boolean; isVisible?: boolean } = {}) 
 }
 
 describe('beach list drawer state', () => {
-  it('keeps the drawer unmounted initially and hides weather only while visible', () => {
+  it('keeps the drawer unmounted initially and hides weather only while the mobile list is visible', () => {
     expect(shouldMountBeachListDrawer(false)).toBe(false)
     expect(shouldHideWeatherPanel(false)).toBe(false)
 
     expect(shouldMountBeachListDrawer(true)).toBe(true)
     expect(shouldHideWeatherPanel(true)).toBe(true)
-    expect(shouldHideWeatherPanel(false, true)).toBe(true)
+    expect(shouldHideWeatherPanel(true, true)).toBe(false)
+    expect(shouldHideWeatherPanel(false, true)).toBe(false)
   })
 
   it('uses split layout for desktop and tablet landscape only', () => {
