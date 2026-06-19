@@ -1,5 +1,7 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Beach } from '~/types/beach'
+import { getVisibleFlagNotificationMessage, type FlagNotification } from '~/utils/flagNotification'
+import { parseTolerantJson } from '~/utils/tolerantJson'
 
 // Module-level state shared across components
 const beaches = ref<Beach[]>([])
@@ -8,6 +10,8 @@ const lastModified = ref<string>('')
 const isProvisional = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
 const isError = ref<boolean>(false)
+const flagNotifications = ref<FlagNotification[]>([])
+const visibleNotificationMessage = computed(() => getVisibleFlagNotificationMessage(flagNotifications.value))
 
 export function useBeaches() {
   async function fetchBeaches(force = false) {
@@ -24,12 +28,13 @@ export function useBeaches() {
       
       if (!flagsRes.ok || !playasRes.ok) throw new Error('API request failed')
       
-      const flagsData = await flagsRes.json()
+      const flagsData = parseTolerantJson<any>(await flagsRes.text())
       const playasData = await playasRes.json()
 
       const flagStates = flagsData.states || []
       const ocupacion = flagsData.ocupacion || []
       const detailedBeaches = playasData.states || []
+      flagNotifications.value = Array.isArray(flagsData.notificacion) ? flagsData.notificacion : []
 
       const OCUPACION_MAP: Record<string, string> = {
         'ply_la_isleta_del_moro': 'ocupacion_la_isleta',
@@ -78,6 +83,8 @@ export function useBeaches() {
     isProvisional,
     isLoading,
     isError,
+    flagNotifications,
+    visibleNotificationMessage,
     fetchBeaches
   }
 }

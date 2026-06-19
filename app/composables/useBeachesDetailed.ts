@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import type { Beach } from '~/types/beach'
+import { parseTolerantJson } from '~/utils/tolerantJson'
 
 const beachesDetailed = ref<Beach[]>([])
 const isLoading = ref<boolean>(false)
@@ -25,11 +26,8 @@ export function useBeachesDetailed() {
     try {
       const [playasRes, flagsRes] = await Promise.all([
         fetch('https://turismonijar.es/estado-de-las-banderas/?tipo=playas'),
-        fetch('https://turismonijar.es/estado-de-las-banderas/')
-      ]).catch(() => {
-        // Fallback in case parallel fetch fails
-        return [null, null]
-      })
+        fetch('https://turismonijar.es/estado-de-las-banderas/').catch(() => null)
+      ])
 
       if (!playasRes || !playasRes.ok) throw new Error('Failed to fetch beaches data')
       const playasData = await playasRes.json()
@@ -37,29 +35,33 @@ export function useBeachesDetailed() {
       let liveFlagsMap: Record<string, string> = {}
       let liveOcupacionMap: Record<string, string> = {}
       if (flagsRes && flagsRes.ok) {
-        const flagsData = await flagsRes.json()
-        const flagsList = flagsData.states || []
-        const ocupacionList = flagsData.ocupacion || []
-        
-        const OCUPACION_MAP: Record<string, string> = {
-          'ply_la_isleta_del_moro': 'ocupacion_la_isleta',
-          'ply_cala_del_plomo': 'ocupacion_el_plomo',
-          'ply_los_genoveses': 'ocupacion_genoveses',
+        try {
+          const flagsData = parseTolerantJson<any>(await flagsRes.text())
+          const flagsList = flagsData.states || []
+          const ocupacionList = flagsData.ocupacion || []
+          
+          const OCUPACION_MAP: Record<string, string> = {
+            'ply_la_isleta_del_moro': 'ocupacion_la_isleta',
+            'ply_cala_del_plomo': 'ocupacion_el_plomo',
+            'ply_los_genoveses': 'ocupacion_genoveses',
+          }
+
+          flagsList.forEach((flagItem: any) => {
+            let mappedId = flagItem.id
+            if (flagMapping[flagItem.id]) {
+              mappedId = flagMapping[flagItem.id]
+            }
+            liveFlagsMap[mappedId] = flagItem.state
+
+            const targetOcupacionId = OCUPACION_MAP[flagItem.id] || String(flagItem.id).replace('ply_', 'ocupacion_')
+            const oItem = ocupacionList.find((o: any) => o.id === targetOcupacionId)
+            if (oItem) {
+              liveOcupacionMap[mappedId] = oItem.state
+            }
+          })
+        } catch (err) {
+          console.warn('Error parsing live beach flags:', err)
         }
-
-        flagsList.forEach((flagItem: any) => {
-          let mappedId = flagItem.id
-          if (flagMapping[flagItem.id]) {
-            mappedId = flagMapping[flagItem.id]
-          }
-          liveFlagsMap[mappedId] = flagItem.state
-
-          const targetOcupacionId = OCUPACION_MAP[flagItem.id] || String(flagItem.id).replace('ply_', 'ocupacion_')
-          const oItem = ocupacionList.find((o: any) => o.id === targetOcupacionId)
-          if (oItem) {
-            liveOcupacionMap[mappedId] = oItem.state
-          }
-        })
       }
 
       const rawBeaches = playasData.states || []

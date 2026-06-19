@@ -92,8 +92,17 @@
         @click="toggleBeachList"
       >
         <X v-if="isBeachListVisible" class="size-6" aria-hidden="true" />
-        <MapPinSearch v-else class="size-6" aria-hidden="true" />
+        <BeachStatusFlagIcon v-else use-current-color class="size-7 text-primary" />
       </button>
+    </Teleport>
+
+    <Teleport to="body" v-if="isMounted && !isLoading && !isError">
+      <FlagNotificationModal
+        v-if="flagNotificationModalOpen && visibleNotificationMessage"
+        :message="visibleNotificationMessage"
+        :close-label="t('weather.close')"
+        @close="closeFlagNotificationModal"
+      />
     </Teleport>
 
     <Teleport to="body" v-if="isMounted && !isLoading && !isError">
@@ -152,7 +161,7 @@
 <script setup lang="ts">
   import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
   import { IonContent, IonPage } from '@ionic/vue';
-  import { MapPinSearch, X } from '@lucide/vue';
+  import { X } from '@lucide/vue';
   import CustomDrawer from '@/components/CustomDrawer.vue';
   import BeachMap from '@/components/BeachMap.vue';
   import BeachList from '@/components/BeachList.vue';
@@ -160,6 +169,8 @@
   import WeatherBackground from '@/components/WeatherBackground.vue';
   import LoadingOverlay from '@/components/LoadingOverlay.vue';
   import ErrorOverlay from '@/components/ErrorOverlay.vue';
+  import BeachStatusFlagIcon from '@/components/BeachStatusFlagIcon.vue';
+  import FlagNotificationModal from '@/components/FlagNotificationModal.vue';
   import type { Beach } from '~/types/beach';
   import type { WeatherState } from '~/composables/useWeather';
   import {
@@ -178,6 +189,7 @@
   import { useBeaches } from '~/composables/useBeaches';
   import { useBeachWeather } from '~/composables/useBeachWeather';
   import { useBeachWeatherAggregate } from '~/composables/useBeachWeatherAggregate';
+  import { closeFlagNotificationModalState, syncFlagNotificationModalState } from '~/utils/flagNotification';
 
   const localePath = useLocalePath()
   const { t } = useI18n()
@@ -189,6 +201,8 @@
   const drawerTargetState = ref<DrawerTargetState>('peek')
   const selectedBeachId = ref<number | string | null>(null)
   const splitWeatherOpen = ref(false)
+  const flagNotificationModalOpen = ref(false)
+  const dismissedNotificationMessage = useState<string | null>('dismissedFlagNotificationMessage', () => null)
   const viewportWidth = ref(0)
   const viewportHeight = ref(0)
   
@@ -226,8 +240,19 @@
     isProvisional, 
     isLoading, 
     isError, 
+    visibleNotificationMessage,
     fetchBeaches 
   } = useBeaches()
+
+  watch(visibleNotificationMessage, (message) => {
+    const state = syncFlagNotificationModalState({
+      open: flagNotificationModalOpen.value,
+      dismissedMessage: dismissedNotificationMessage.value
+    }, message)
+
+    flagNotificationModalOpen.value = state.open
+    dismissedNotificationMessage.value = state.dismissedMessage
+  }, { immediate: true })
   const {
     fetchBeachWeather,
     beachesWeather,
@@ -314,6 +339,16 @@
 
   function closeSplitWeather() {
     splitWeatherOpen.value = false
+  }
+
+  function closeFlagNotificationModal() {
+    const state = closeFlagNotificationModalState({
+      open: flagNotificationModalOpen.value,
+      dismissedMessage: dismissedNotificationMessage.value
+    }, visibleNotificationMessage.value)
+
+    flagNotificationModalOpen.value = state.open
+    dismissedNotificationMessage.value = state.dismissedMessage
   }
 
   async function selectWeatherBeach(beachId: string | number) {

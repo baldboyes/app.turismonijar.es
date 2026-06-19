@@ -6,11 +6,12 @@ import { cn } from '~/lib/utils'
 
 const props = defineProps<{
   status?: string
+  useCurrentColor?: boolean
   class?: string
 }>()
 
 const iconStyle = computed(() => ({
-  color: getBeachStatusCssColor(props.status)
+  color: props.useCurrentColor ? 'currentColor' : getBeachStatusCssColor(props.status)
 }))
 </script>
 
