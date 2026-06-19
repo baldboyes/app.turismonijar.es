@@ -8,7 +8,11 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { getBeachStatusCssColor } from '~/utils/beachStatusStyles'
+import {
+  buildBeachCircleMarkerOptions,
+  buildBeachStatusFlagMarkerOptions,
+  buildBeachStatusFlagMarkerSvg
+} from '~/utils/beachStatusFlagMarker'
 
 const props = defineProps<{
   lat: number
@@ -36,57 +40,25 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYmFsZGJveSIsImEiOiJhMzBzeklzIn0.buJ1PP9-a9Jkq
 
 function createFlagMarker(state?: string, isFull?: boolean) {
   const el = document.createElement('div')
+  el.style.display = 'block'
+  el.style.lineHeight = '0'
+  el.style.fontSize = '0'
+  el.style.cursor = 'pointer'
+
   if (!state) {
     // Return standard colored circle marker for beaches without a monitored flag
-    el.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="9" fill="#059669" stroke="white" stroke-width="2" shadow="0 2px 4px rgba(0,0,0,0.2)"/>
-        <circle cx="12" cy="12" r="5" fill="#ffffff"/>
-      </svg>
-    `
-    el.style.cursor = 'pointer'
+    el.style.width = '24px'
+    el.style.height = '24px'
+    el.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style="display:block"><circle cx="12" cy="12" r="9" fill="#059669" stroke="white" stroke-width="2" shadow="0 2px 4px rgba(0,0,0,0.2)"/><circle cx="12" cy="12" r="5" fill="#ffffff"/></svg>'
     if (isFull) {
       appendRedDot(el)
     }
     return el
   }
 
-  const stateLower = state.toLowerCase()
-  let svgPath = ''
-
-  switch (stateLower) {
-    case 'verde':
-      svgPath = '/banderas/estados/verde_.svg'
-      break
-    case 'amarilla':
-      svgPath = '/banderas/estados/amarilla_.svg'
-      break
-    case 'amarilla_por_medusa':
-      svgPath = '/banderas/estados/amarilla_por_medusa_.svg'
-      break
-    case 'roja':
-      svgPath = '/banderas/estados/roja_.svg'
-      break
-    default:
-      const color = getBeachStatusCssColor(state)
-      el.innerHTML = `
-        <svg width="30" height="30" viewBox="0 0 30 30">
-          <circle cx="15" cy="15" r="14" fill="${color}" stroke="white" stroke-width="2"/>
-        </svg>
-      `
-      el.style.cursor = 'pointer'
-      if (isFull) {
-        appendRedDot(el)
-      }
-      return el
-  }
-
   el.style.width = '30px'
   el.style.height = '30px'
-  el.style.backgroundImage = `url('${svgPath}')`
-  el.style.backgroundSize = 'contain'
-  el.style.backgroundRepeat = 'no-repeat'
-  el.style.cursor = 'pointer'
+  el.innerHTML = buildBeachStatusFlagMarkerSvg(state)
 
   if (isFull) {
     appendRedDot(el)
@@ -121,7 +93,9 @@ function initMap() {
   const isFull = props.ocupacionState === 'red'
   const markerElement = createFlagMarker(props.bandera, isFull)
   
-  marker = new mapboxgl.Marker(markerElement)
+  marker = new mapboxgl.Marker(props.bandera
+    ? buildBeachStatusFlagMarkerOptions(markerElement)
+    : buildBeachCircleMarkerOptions(markerElement))
     .setLngLat([props.lng, props.lat])
     .addTo(map)
 
@@ -189,7 +163,9 @@ watch(() => [props.bandera, props.ocupacionState], () => {
     }
     const isFull = props.ocupacionState === 'red'
     const markerElement = createFlagMarker(props.bandera, isFull)
-    marker = new mapboxgl.Marker(markerElement)
+    marker = new mapboxgl.Marker(props.bandera
+      ? buildBeachStatusFlagMarkerOptions(markerElement)
+      : buildBeachCircleMarkerOptions(markerElement))
       .setLngLat([props.lng, props.lat])
       .addTo(map)
   }

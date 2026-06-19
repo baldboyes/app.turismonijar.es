@@ -29,10 +29,6 @@ export function getBeachStatusBadgeClass(status?: string) {
   }
 }
 
-export function getBeachStatusDotClass(status?: string) {
-  return normalizeBeachStatus(status) === 'amarilla' ? 'bg-gray-900' : 'bg-white'
-}
-
 export function getBeachStatusCardClass(status?: string) {
   switch (normalizeBeachStatus(status)) {
     case 'verde': return 'bg-status-verde'

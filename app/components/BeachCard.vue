@@ -23,7 +23,7 @@
         class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase shadow-md flex items-center gap-1.5 backdrop-blur-sm"
         :class="getBadgeClass(beach.bandera)"
       >
-        <span class="size-2 rounded-full shrink-0" :class="getDotColorClass(beach.bandera)"></span>
+        <BeachStatusFlagIcon :status="beach.bandera" class="size-3" />
         {{ $t(beach.bandera.toLowerCase()) }}
       </div>
 
@@ -106,7 +106,8 @@ import { computed } from 'vue'
 import { AlertTriangle, Sun, Thermometer, Waves, Wind, ArrowRight } from '@lucide/vue'
 import type { Beach } from '~/types/beach'
 import type { BeachWeatherItem } from '~/types/beachWeather'
-import { getBeachStatusBadgeClass, getBeachStatusDotClass } from '~/utils/beachStatusStyles'
+import { getBeachStatusBadgeClass } from '~/utils/beachStatusStyles'
+import BeachStatusFlagIcon from '~/components/BeachStatusFlagIcon.vue'
 
 const props = defineProps<{
   beach: Beach
@@ -169,7 +170,4 @@ function getBadgeClass(bandera: string) {
   return getBeachStatusBadgeClass(bandera)
 }
 
-function getDotColorClass(bandera: string) {
-  return getBeachStatusDotClass(bandera)
-}
 </script>

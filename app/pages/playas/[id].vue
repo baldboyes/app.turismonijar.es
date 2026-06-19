@@ -60,7 +60,7 @@
               class="px-4 py-2 rounded-2xl text-xs font-black tracking-wider uppercase shadow-lg flex items-center gap-2 backdrop-blur-md"
               :class="getBadgeClass(beach.bandera)"
             >
-              <span class="size-2.5 rounded-full shrink-0" :class="getDotColorClass(beach.bandera)"></span>
+              <BeachStatusFlagIcon :status="beach.bandera" class="size-4" />
               {{ $t(beach.bandera.toLowerCase()) }}
             </div>
 
@@ -284,7 +284,8 @@ import { useRoute, useRouter, useLocalePath, useSeoMeta, useI18n } from '#import
 import { useBeachesDetailed } from '~/composables/useBeachesDetailed'
 import { useBeachWeather } from '~/composables/useBeachWeather'
 import type { WeatherState } from '~/composables/useWeather'
-import { getBeachStatusBadgeClass, getBeachStatusDotClass } from '~/utils/beachStatusStyles'
+import { getBeachStatusBadgeClass } from '~/utils/beachStatusStyles'
+import BeachStatusFlagIcon from '@/components/BeachStatusFlagIcon.vue'
 import BeachDetailMap from '@/components/BeachDetailMap.vue'
 import TiempoDetalleModal from '@/components/TiempoDetalleModal.vue'
 
@@ -397,9 +398,6 @@ function getBadgeClass(bandera: string) {
   return getBeachStatusBadgeClass(bandera)
 }
 
-function getDotColorClass(bandera: string) {
-  return getBeachStatusDotClass(bandera)
-}
 </script>
 
 <style scoped>

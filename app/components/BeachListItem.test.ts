@@ -38,13 +38,16 @@ afterEach(() => {
 })
 
 describe('BeachListItem', () => {
-  it('renders a neutral beach row with a beach-specific accessible label and flag dot', async () => {
+  it('renders a neutral beach row with a beach-specific accessible label and flag icon', async () => {
     const html = await renderBeachListItem({ beach })
 
     expect(html).toContain('aria-label="View beach: Test Beach"')
+    expect(html).toContain('fill="currentColor"')
+    expect(html).toContain('stroke="white"')
     expect(html).toContain('var(--color-status-verde)')
     expect(html).toContain('Test Beach')
     expect(html).not.toContain('Green flag')
+    expect(html).not.toContain('flagDotStyle')
   })
 
   it('renders parking full as alert text with the pulse dot', async () => {

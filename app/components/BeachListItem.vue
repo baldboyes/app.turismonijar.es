@@ -8,7 +8,7 @@
     >
       <span class="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2">
         <span class="relative flex size-7 shrink-0 items-center justify-center" aria-hidden="true">
-          <span class="size-6 rounded-full ring-2 ring-white shadow-sm" :style="flagDotStyle" />
+          <BeachStatusFlagIcon :status="beach.state" class="size-6 drop-shadow-sm" />
           <span v-if="isParkingFull" class="parking-alert-pulse" />
         </span>
         <span class="flex min-w-0 flex-1 flex-col gap-1 space-y-0">
@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Beach } from '~/types/beach'
-import { getBeachStatusCssColor } from '~/utils/beachStatusStyles'
+import BeachStatusFlagIcon from '~/components/BeachStatusFlagIcon.vue'
 
 const props = defineProps<{
   beach: Beach
@@ -34,10 +34,6 @@ const props = defineProps<{
 const { t } = useI18n()
 
 const isParkingFull = computed(() => props.beach.ocupacion?.state === 'red')
-
-const flagDotStyle = computed(() => ({
-  backgroundColor: getBeachStatusCssColor(props.beach.state)
-}))
 
 </script>
 

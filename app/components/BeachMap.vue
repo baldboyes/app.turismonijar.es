@@ -34,7 +34,7 @@ import type { Beach } from '~/types/beach'
 import type { BeachWeatherItem } from '~/types/beachWeather'
 import { useBeachWeather } from '~/composables/useBeachWeather'
 import type { WeatherState } from '~/composables/useWeather'
-import { getBeachStatusCssColor } from '~/utils/beachStatusStyles'
+import { buildBeachStatusFlagMarkerOptions, buildBeachStatusFlagMarkerSvg } from '~/utils/beachStatusFlagMarker'
 import TiempoDetalleModal from './TiempoDetalleModal.vue'
 import { buildBeachPopupHtml, shouldFitBoundsForWeatherRefresh } from './BeachMap.popup'
 
@@ -95,43 +95,13 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYmFsZGJveSIsImEiOiJhMzBzeklzIn0.buJ1PP9-a9Jkq
 // Helper to create custom HTML element for marker
 function createFlagMarker(state: string, isFull?: boolean) {
   const el = document.createElement('div')
-  const stateLower = state.toLowerCase()
-  let svgPath = ''
-
-  switch (stateLower) {
-    case 'verde':
-      svgPath = '/banderas/estados/verde_.svg'
-      break
-    case 'amarilla':
-      svgPath = '/banderas/estados/amarilla_.svg'
-      break
-    case 'amarilla_por_medusa':
-      svgPath = '/banderas/estados/amarilla_por_medusa_.svg'
-      break
-    case 'roja':
-      svgPath = '/banderas/estados/roja_.svg'
-      break
-    default:
-      const color = getBeachStatusCssColor(state)
-      el.innerHTML = `
-        <svg width="30" height="30" viewBox="0 0 30 30">
-          <circle cx="15" cy="15" r="14" fill="${color}" stroke="white" stroke-width="2"/>
-          <circle cx="15" cy="15" r="9" fill="${color}" opacity="0.8"/>
-        </svg>
-      `
-      el.style.cursor = 'pointer'
-      if (isFull) {
-        appendRedDot(el)
-      }
-      return el
-  }
-
+  el.style.display = 'block'
   el.style.width = '30px'
   el.style.height = '30px'
-  el.style.backgroundImage = `url('${svgPath}')`
-  el.style.backgroundSize = 'contain'
-  el.style.backgroundRepeat = 'no-repeat'
+  el.style.lineHeight = '0'
+  el.style.fontSize = '0'
   el.style.cursor = 'pointer'
+  el.innerHTML = buildBeachStatusFlagMarkerSvg(state)
 
   if (isFull) {
     appendRedDot(el)
@@ -235,7 +205,7 @@ function updateMarkers(shouldFitBounds = true) {
         parkingFullText: t('playas_page.parking_full')
       }))
 
-    const marker = new mapboxgl.Marker(markerElement)
+    const marker = new mapboxgl.Marker(buildBeachStatusFlagMarkerOptions(markerElement))
       .setLngLat([beach.lng, beach.lat])
       .setPopup(popup)
       .addTo(map!)

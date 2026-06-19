@@ -38,7 +38,7 @@
               @click.stop="isBeachSelectorOpen = !isBeachSelectorOpen"
             >
               <span v-if="selectedBeach" class="relative mt-0.5 flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
-                <span class="size-4 rounded-full ring-2 ring-white shadow-sm" :style="getBeachFlagStyle(selectedBeach.state)" />
+                <BeachStatusFlagIcon :status="selectedBeach.state" class="size-4 drop-shadow-sm" />
                 <span v-if="isParkingFull(selectedBeach)" class="weather-selector-parking-alert" />
               </span>
               <MapPin v-else class="mt-0.5 size-4 shrink-0 text-[#232323]" />
@@ -76,7 +76,7 @@
                 >
                   <span class="flex min-w-0 items-center gap-3">
                     <span class="relative flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
-                      <span class="size-4 rounded-full ring-2 ring-white shadow-sm" :style="getBeachFlagStyle(beach.state)" />
+                      <BeachStatusFlagIcon :status="beach.state" class="size-4 drop-shadow-sm" />
                       <span v-if="isParkingFull(beach)" class="weather-selector-parking-alert" />
                     </span>
                     <span class="truncate">{{ beach.title }}</span>
@@ -341,7 +341,7 @@ import {
   getWeatherStateFromCode
 } from '~/composables/useBeachWeatherAggregate'
 import type { BeachWeatherItem } from '~/types/beachWeather'
-import { getBeachStatusCssColor } from '~/utils/beachStatusStyles'
+import BeachStatusFlagIcon from '~/components/BeachStatusFlagIcon.vue'
 import {
   X,
   Wind,
@@ -406,10 +406,6 @@ function selectBeach(beachId: string | number) {
 
 function closeBeachSelector() {
   isBeachSelectorOpen.value = false
-}
-
-function getBeachFlagStyle(state?: string) {
-  return { backgroundColor: getBeachStatusCssColor(state) }
 }
 
 function isParkingFull(beach: Beach) {
