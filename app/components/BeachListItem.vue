@@ -13,7 +13,8 @@
         </span>
         <span class="flex min-w-0 flex-1 flex-col gap-1 space-y-0">
           <span class="truncate text-sm font-bold">{{ beach.title }}</span>
-          <span v-if="isParkingFull" class="truncate text-[10px] font-extrabold uppercase tracking-wider text-red-700" role="alert">
+          <span v-if="isParkingFull" class="inline-flex items-center gap-1 truncate text-[10px] font-extrabold uppercase tracking-wider text-red-700" role="alert">
+            <ParkingFullIcon class="size-3 text-red-600" />
             {{ $t('playas_page.parking_full') }}
           </span>
         </span>
@@ -26,6 +27,7 @@
 import { computed } from 'vue'
 import type { Beach } from '~/types/beach'
 import BeachStatusFlagIcon from '~/components/BeachStatusFlagIcon.vue'
+import ParkingFullIcon from '~/components/ParkingFullIcon.vue'
 
 const props = defineProps<{
   beach: Beach

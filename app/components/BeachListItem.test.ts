@@ -58,6 +58,8 @@ describe('BeachListItem', () => {
     expect(html).toContain('role="alert"')
     expect(html).toContain('parking-alert-pulse')
     expect(html).toContain('Parking full')
+    expect(html).toContain('viewbox="0 0 14 14"')
+    expect(html).toContain('text-red-600')
   })
 
   it('does not render per-beach weather content', async () => {

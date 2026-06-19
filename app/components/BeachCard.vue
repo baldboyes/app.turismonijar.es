@@ -32,7 +32,7 @@
         v-if="beach.ocupacion?.state === 'red'" 
         class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase shadow-md flex items-center gap-1 bg-red-600/95 text-white backdrop-blur-sm"
       >
-        <AlertTriangle class="w-3 h-3" />
+        <ParkingFullIcon class="size-3 text-white" />
         <span>{{ $t('playas_page.parking_full') }}</span>
       </div>
     </div>
@@ -103,11 +103,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AlertTriangle, Sun, Thermometer, Waves, Wind, ArrowRight } from '@lucide/vue'
+import { Sun, Thermometer, Waves, Wind, ArrowRight } from '@lucide/vue'
 import type { Beach } from '~/types/beach'
 import type { BeachWeatherItem } from '~/types/beachWeather'
 import { getBeachStatusBadgeClass } from '~/utils/beachStatusStyles'
 import BeachStatusFlagIcon from '~/components/BeachStatusFlagIcon.vue'
+import ParkingFullIcon from '~/components/ParkingFullIcon.vue'
 
 const props = defineProps<{
   beach: Beach

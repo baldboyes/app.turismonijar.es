@@ -69,7 +69,7 @@
               v-if="beach.ocupacion?.state === 'red'"
               class="px-4 py-2 rounded-2xl text-xs font-black tracking-wider uppercase shadow-lg flex items-center gap-2 bg-red-600/90 text-white backdrop-blur-md"
             >
-              <AlertTriangle class="w-3.5 h-3.5" />
+              <ParkingFullIcon class="size-3.5 text-white" />
               <span>{{ $t('playas_page.parking_full') }}</span>
             </div>
           </div>
@@ -279,7 +279,7 @@
 <script setup lang="ts">
 import { onMounted, computed, ref } from 'vue'
 import { IonPage, IonContent } from '@ionic/vue'
-import { ChevronLeft, Waves, AlertCircle, MapPin, Ruler, Expand, Accessibility, Info, Phone, Umbrella, AlertTriangle, Thermometer, Wind, Sun } from '@lucide/vue'
+import { ChevronLeft, Waves, AlertCircle, MapPin, Ruler, Expand, Accessibility, Info, Phone, Umbrella, Thermometer, Wind, Sun } from '@lucide/vue'
 import { useRoute, useRouter, useLocalePath, useSeoMeta, useI18n } from '#imports'
 import { useBeachesDetailed } from '~/composables/useBeachesDetailed'
 import { useBeachWeather } from '~/composables/useBeachWeather'
@@ -288,6 +288,7 @@ import { getBeachStatusBadgeClass } from '~/utils/beachStatusStyles'
 import BeachStatusFlagIcon from '@/components/BeachStatusFlagIcon.vue'
 import BeachDetailMap from '@/components/BeachDetailMap.vue'
 import TiempoDetalleModal from '@/components/TiempoDetalleModal.vue'
+import ParkingFullIcon from '@/components/ParkingFullIcon.vue'
 
 const route = useRoute()
 const router = useRouter()

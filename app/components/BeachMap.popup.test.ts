@@ -112,6 +112,9 @@ describe('BeachMap popup helpers', () => {
 
     expect(html).toContain('flex items-center justify-center gap-1 mb-1.5')
     expect(html).toContain('Parking full')
+    expect(html).toContain('viewBox="0 0 14 14"')
+    expect(html).toContain('fill="currentColor"')
+    expect(html).toContain('bg-red-600 text-white inline-flex items-center gap-1')
   })
 
   it('renders the compact weather mini-line when weather is available', () => {

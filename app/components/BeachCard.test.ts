@@ -90,4 +90,15 @@ describe('BeachCard', () => {
     expect(html).toContain('21°')
     expect(html).toContain('7 UV')
   })
+
+  it('renders the parking full badge with the approved white icon on red background', async () => {
+    const html = await renderBeachCard({
+      beach: { ...beach, ocupacion: { state: 'red' } }
+    })
+
+    expect(html).toContain('playas_page.parking_full')
+    expect(html).toContain('bg-red-600/95')
+    expect(html).toContain('viewbox="0 0 14 14"')
+    expect(html).toContain('text-white')
+  })
 })
