@@ -44,17 +44,17 @@ function handleOpenChange(open: boolean) {
         <DialogTitle :id="titleId" class="sr-only">{{ title }}</DialogTitle>
         <DialogClose
           type="button"
-          class="absolute right-3 top-3 z-10 inline-flex size-10 items-center justify-center rounded-full text-amber-900 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50"
+          class="absolute right-3 top-3 z-10 inline-flex size-10 items-center justify-center rounded-full text-amber-900 transition hover:bg-amber-100 focus:outline-none focus-visible:outline-none"
           :aria-label="closeLabel"
         >
           <X class="size-5" aria-hidden="true" />
         </DialogClose>
 
-        <div class="flex min-h-0 gap-4 p-6 pr-14">
+        <div class="flex min-h-0 flex-col items-start gap-3 p-6">
           <div class="shrink-0 text-amber-600" aria-hidden="true">
-            <AlertTriangle class="size-8" :stroke-width="2.4" />
+            <AlertTriangle class="size-6" :stroke-width="2.4" />
           </div>
-          <div class="min-h-0 flex-1 overflow-y-auto break-words pr-1 text-base font-medium leading-relaxed whitespace-pre-wrap">
+          <div class="min-h-0 w-full flex-1 overflow-y-auto break-words pr-1 text-sm font-medium leading-relaxed whitespace-pre-wrap">
             {{ message }}
           </div>
         </div>
