@@ -413,10 +413,10 @@ function isParkingFull(beach: Beach) {
 }
 
 const contentContainerClass = computed(() => [
-  'relative z-10 flex min-h-full flex-col gap-6 pt-safe pb-8 content-container',
+  'relative z-10 flex min-h-full flex-col gap-6 pb-8 content-container',
   props.layout === 'split-map'
-    ? 'split-weather-content max-w-none items-center px-6 lg:px-10'
-    : 'w-full max-w-lg mx-auto px-4'
+    ? 'split-weather-content max-w-none items-center px-6 pt-safe lg:px-10'
+    : 'w-full max-w-lg mx-auto px-4 pt-[calc(var(--safe-area-inset-top,0px)+2.75rem)]'
 ])
 
 const contentContainerStyle = computed(() => props.layout === 'split-map'

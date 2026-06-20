@@ -269,7 +269,7 @@ function fitBounds() {
 function focusOnBeach(beach: Beach) {
   if (!map) return
 
-  const overlayOffsetY = -Math.max(0, ((props.fitBoundsPaddingBottom ?? 60) - 60) / 2)
+  const overlayOffsetY = getFocusOffsetY()
 
   map.flyTo({
     center: [beach.lng, beach.lat],
@@ -296,6 +296,14 @@ function focusOnBeach(beach: Beach) {
       marker.togglePopup()
     }
   }
+}
+
+function getFocusOffsetY() {
+  if (!import.meta.client) return 0
+
+  if (window.innerWidth >= 1024) return 180
+  if (window.innerWidth >= 768) return 140
+  return 28
 }
 
 function updateBottomPadding(translateY: number) {
