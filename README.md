@@ -112,3 +112,7 @@ To generate the app icons and splash screens for iOS and Android, we use `@capac
    ```
    *(This runs `capacitor-assets generate` to update native Android and iOS folders).*
 
+
+
+Existe un cron en el vps 5.XXXX que ejecuta cada 15min:
+https://baldboy.es/tiempo/obtener.php?token=MiTokenSuperSecreto123
