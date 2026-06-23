@@ -70,6 +70,9 @@ let animationFrameId: number | null = null
 const timeoutIds = new Set<any>()
 const WIND_MARKER_MIN_ZOOM = 12
 
+const hasCenteredInitial = ref(false)
+let resizeObserver: ResizeObserver | null = null
+
 const selectedWeatherState = computed<WeatherState>(() => {
   const code = selectedWeather.value?.current.weather_code
   if (code === undefined || code === null) return 'sunny'
@@ -234,6 +237,13 @@ function updateMarkers(shouldFitBounds = true) {
 function fitBounds() {
   if (!map || props.beaches.length === 0) return
 
+  map.resize()
+
+  const container = map.getContainer()
+  if (container.clientWidth === 0 || container.clientHeight === 0) {
+    return
+  }
+
   const bounds = new mapboxgl.LngLatBounds()
   props.beaches.forEach(beach => {
     bounds.extend([beach.lng, beach.lat])
@@ -263,17 +273,40 @@ function fitBounds() {
     animate: true,
     duration: 800
   })
+
+  hasCenteredInitial.value = true
+}
+
+function getPaddingForState(state: 'peek' | 'mid' | 'full') {
+  let bottomPadding = 280
+  if (state === 'mid') {
+    if (import.meta.client) {
+      bottomPadding = window.innerHeight / 2 + 20
+    } else {
+      bottomPadding = 420
+    }
+  } else if (state === 'full') {
+    bottomPadding = 60
+  } else {
+    bottomPadding = props.fitBoundsPaddingBottom ?? 100
+  }
+  return {
+    top: props.fitBoundsPaddingTop ?? 180,
+    bottom: bottomPadding,
+    left: props.fitBoundsPaddingLeft,
+    right: 45
+  }
 }
 
 // Expose zoom to method
 function focusOnBeach(beach: Beach) {
   if (!map) return
 
-  const overlayOffsetY = getFocusOffsetY()
+  const padding = getPaddingForState(props.drawerState)
 
   map.flyTo({
     center: [beach.lng, beach.lat],
-    offset: [0, overlayOffsetY],
+    padding: padding,
     zoom: 14.5,
     duration: 1000
   })
@@ -296,14 +329,6 @@ function focusOnBeach(beach: Beach) {
       marker.togglePopup()
     }
   }
-}
-
-function getFocusOffsetY() {
-  if (!import.meta.client) return 0
-
-  if (window.innerWidth >= 1024) return 180
-  if (window.innerWidth >= 768) return 140
-  return 28
 }
 
 function updateBottomPadding(translateY: number) {
@@ -348,11 +373,56 @@ function updateBottomPadding(translateY: number) {
   })
 }
 
+function easeToBottomPadding(translateY: number, duration = 400) {
+  if (!map || props.beaches.length === 0) return
+
+  const windowHeight = window.innerHeight
+  const midY = windowHeight / 2
+  const maxT = windowHeight - 140
+
+  let bottomPadding = 280
+
+  if (translateY <= 0) {
+    bottomPadding = 60
+  } else if (translateY < midY) {
+    const t = translateY / midY
+    const startPadding = 60
+    const endPadding = midY + 20
+    bottomPadding = startPadding + (endPadding - startPadding) * t
+  } else {
+    const range = maxT - midY
+    if (range > 0) {
+      const t = (translateY - midY) / range
+      const startPadding = midY + 20
+      const endPadding = 280
+      bottomPadding = startPadding + (endPadding - startPadding) * t
+    } else {
+      bottomPadding = 280
+    }
+  }
+
+  if (translateY >= maxT && props.fitBoundsPaddingBottom !== undefined) {
+    bottomPadding = props.fitBoundsPaddingBottom
+  }
+
+  map.easeTo({
+    padding: {
+      top: 180,
+      bottom: bottomPadding,
+      left: 45,
+      right: 45
+    },
+    duration: duration,
+    easing: (t) => t * (2 - t)
+  })
+}
+
 // Expose functions to parent
 defineExpose({
   focusOnBeach,
   fitBounds,
-  updateBottomPadding
+  updateBottomPadding,
+  easeToBottomPadding
 })
 
 watch(() => props.beaches, () => {
@@ -378,7 +448,7 @@ watch(() => props.selectedBeachId, (newId) => {
   }
 })
 
-watch(() => props.drawerState, () => {
+watch(() => props.drawerState, (newState) => {
   if (props.selectedBeachId) {
     const beach = props.beaches.find(b => b.id === props.selectedBeachId)
     if (beach) {
@@ -386,7 +456,14 @@ watch(() => props.drawerState, () => {
       return
     }
   }
-  fitBounds()
+  
+  if (newState === 'peek') {
+    easeToBottomPadding(window.innerHeight, 400)
+  } else if (newState === 'full') {
+    easeToBottomPadding(0, 350)
+  } else {
+    fitBounds()
+  }
 })
 
 onMounted(() => {
@@ -401,7 +478,20 @@ onMounted(() => {
       attributionControl: false // Hide default attribution
     })
 
-
+    if (import.meta.client) {
+      resizeObserver = new ResizeObserver((entries) => {
+        if (!map) return
+        map.resize()
+        
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect
+          if (width > 0 && height > 0 && !hasCenteredInitial.value && props.beaches.length > 0) {
+            fitBounds()
+          }
+        }
+      })
+      resizeObserver.observe(mapContainer.value)
+    }
 
     map.on('load', () => {
       if (!map) return
@@ -425,6 +515,11 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+
   // Clear all pending timeouts to prevent memory leaks or errors
   timeoutIds.forEach(id => clearTimeout(id))
   timeoutIds.clear()

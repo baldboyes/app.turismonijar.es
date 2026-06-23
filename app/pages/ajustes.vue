@@ -33,10 +33,25 @@
             </div>
           </div>
 
-          <div class="flex justify-between gap-2 text-xs">
-            <span class="text-gray-400 font-semibold">{{ $t('settings_panel.version') }}</span>
-            <span class="text-gray-700 font-bold">0.65</span>
+
+          <!-- Logos -->
+          <div class="flex flex-wrap lg:flex-nowrap gap-4 lg:gap-8 pt-8 lg:pt-12 items-center justify-center text-xs">
+            <div>
+              <img src="/logos/01.webp" alt="" class="h-10 lg:h-12 w-auto object-contain" />
+            </div>
+            <div>
+              <img src="/logos/02.webp" alt="" class="h-10 lg:h-12 w-auto object-contain" />
+            </div>
+            <div>
+              <img src="/logos/03.webp" alt="" class="h-10 lg:h-12 w-auto object-contain" />
+            </div>
+            <div>
+              <img src="/logos/04.webp" alt="" class="h-10 lg:h-12 w-auto object-contain" />
+            </div>
           </div>
+
+
+          <AppVersion class="justify-between w-full opacity-60" />
 
         </div>
 
@@ -56,6 +71,7 @@
   import { IonContent, IonPage } from '@ionic/vue';
   import { Settings } from '@lucide/vue';
   import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+  import AppVersion from '@/components/AppVersion.vue';
   import { useSeoMeta, useI18n } from '#imports'
   
   const { t } = useI18n()

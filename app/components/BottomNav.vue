@@ -18,7 +18,7 @@
           : '!text-primary-foreground/75 bg-transparent hover:bg-primary-foreground/15 hover:!text-primary-foreground hover:scale-105'"
         :title="$t('components.bottom_nav.map')"
       >
-        <Map class="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 mb-0.5" />
+        <Flag class="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 mb-0.5" />
         <span class="text-[7.5px] sm:text-[8px] md:text-[9px] font-bold tracking-wide uppercase mt-0.5 whitespace-nowrap text-center leading-none">{{ $t('components.bottom_nav.map') }}</span>
         <!-- macOS Active Dot -->
         <span 
@@ -87,7 +87,7 @@
 <script setup lang="ts">
   import { useAttrs, computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
   import { useRoute } from 'vue-router'
-  import { Map, Settings, Waves, Newspaper } from '@lucide/vue'
+  import { Flag, Settings, Waves, Newspaper } from '@lucide/vue'
   import { useLocalePath } from '#imports'
   
   defineOptions({

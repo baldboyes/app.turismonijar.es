@@ -134,8 +134,11 @@
     "refreshing": "Refreshing..."
   },
   "components": {
+    "header": {
+      "list_flags": "List flags"
+    },
     "bottom_nav": {
-      "map": "Map",
+      "map": "Flags",
       "beaches": "Beaches",
       "news": "News"
     },

@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'es.turismonijar.app',
+  appId: 'es.vive.nijar',
   appName: 'Vive Níjar',
   webDir: 'dist',
   plugins: {

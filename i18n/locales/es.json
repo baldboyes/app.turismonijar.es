@@ -134,8 +134,11 @@
     "refreshing": "Obteniendo información..."
   },
   "components": {
+    "header": {
+      "list_flags": "Listar banderas"
+    },
     "bottom_nav": {
-      "map": "Mapa",
+      "map": "Banderas",
       "beaches": "Playas",
       "news": "Noticias"
     },

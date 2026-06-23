@@ -85,14 +85,28 @@
     <Teleport to="body" v-if="isMounted && !isLoading && !isError && !isSplitHomeLayout && !splitWeatherOpen">
       <button
         type="button"
-        class="fixed z-50 box-border inline-flex size-12 min-h-12 min-w-12 max-h-12 max-w-12 appearance-none items-center justify-center overflow-hidden !rounded-full bg-white p-0 text-primary shadow-lg backdrop-blur transition hover:bg-white/90"
-        style="top: calc(var(--safe-area-inset-top, 0px) + 44px); right: 16px;"
-        :aria-label="isBeachListVisible ? t('weather.close') : t('components.bottom_nav.beaches')"
+        :class="[
+          'fixed z-[10020] box-border inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 select-none',
+          isBeachListVisible 
+            ? 'w-11 h-11 !rounded-full !p-0' 
+            : 'flex-col !p-3 !gap-1.5 !rounded-2xl'
+        ]"
+        :style="{
+          top: isBeachListVisible ? 'calc(var(--safe-area-inset-top, 0px) + 46px)' : 'auto',
+          bottom: isBeachListVisible ? 'auto' : 'calc(var(--safe-area-inset-bottom, 0px) + 80px)',
+          right: '16px'
+        }"
+        :aria-label="isBeachListVisible ? t('weather.close') : t('components.header.list_flags')"
         :aria-expanded="isBeachListVisible"
         @click="toggleBeachList"
       >
-        <X v-if="isBeachListVisible" class="size-6" aria-hidden="true" />
-        <BeachStatusFlagIcon v-else use-current-color class="size-7 text-primary" />
+        <X v-if="isBeachListVisible" class="size-5" aria-hidden="true" />
+        <template v-else>
+          <BeachStatusFlagIcon use-current-color class="size-5.5 text-white" />
+          <span class="text-[9px] font-black uppercase tracking-wider text-center leading-tight max-w-[65px]">
+            {{ t('components.header.list_flags') }}
+          </span>
+        </template>
       </button>
     </Teleport>
 
@@ -122,7 +136,7 @@
         ref="drawerRef"
         :last-modified="lastModified"
         :is-provisional="isProvisional"
-        :start-hidden="true"
+        :start-hidden="false"
         :target-state="drawerTargetState"
         :lock-at-mid="true"
         @state-change="handleDrawerStateChange"
@@ -134,6 +148,10 @@
         <!-- Listado de Playas -->
         <BeachList :beaches="beaches" @select-beach="selectBeach" :fechas-servicio="fechasServicio" />
       </CustomDrawer>
+    </Teleport>
+
+    <Teleport to="body" v-if="isMounted">
+      <OnboardingModal />
     </Teleport>
   </ion-page>
 </template>
@@ -171,6 +189,7 @@
   import ErrorOverlay from '@/components/ErrorOverlay.vue';
   import BeachStatusFlagIcon from '@/components/BeachStatusFlagIcon.vue';
   import FlagNotificationModal from '@/components/FlagNotificationModal.vue';
+  import OnboardingModal from '@/components/OnboardingModal.vue';
   import type { Beach } from '~/types/beach';
   import type { WeatherState } from '~/composables/useWeather';
   import {
@@ -194,11 +213,11 @@
   const localePath = useLocalePath()
   const { t } = useI18n()
   
-  const drawerState = ref<DrawerState>('peek')
+  const drawerState = ref<DrawerState>('mid')
   const isMounted = ref(false)
-  const isBeachListMounted = ref(false)
-  const isBeachListVisible = ref(false)
-  const drawerTargetState = ref<DrawerTargetState>('peek')
+  const isBeachListMounted = ref(true)
+  const isBeachListVisible = ref(true)
+  const drawerTargetState = ref<DrawerTargetState>('mid')
   const selectedBeachId = ref<number | string | null>(null)
   const splitWeatherOpen = ref(false)
   const flagNotificationModalOpen = ref(false)
@@ -229,7 +248,9 @@
 
   watch(drawerState, updateBottomNavZIndex, { immediate: true })
 
-  watch(isBeachListVisible, updateBottomNavZIndex)
+  watch(isBeachListVisible, () => {
+    updateBottomNavZIndex()
+  })
   watch(splitWeatherOpen, updateBottomNavZIndex)
   watch(isSplitHomeLayout, updateBottomNavZIndex)
 
@@ -277,8 +298,16 @@
     : 45
   )
   const mapFitBoundsPaddingTop = computed(() => isSplitHomeLayout.value ? HOME_SPLIT_MAP_PADDING_TOP : undefined)
-  const mapFitBoundsPaddingBottom = computed(() => isSplitHomeLayout.value ? HOME_SPLIT_MAP_PADDING_BOTTOM : undefined)
-  const mapDrawerState = computed<DrawerState>(() => isSplitHomeLayout.value ? 'full' : drawerState.value)
+  const mapFitBoundsPaddingBottom = computed(() => {
+    if (isSplitHomeLayout.value) return HOME_SPLIT_MAP_PADDING_BOTTOM
+    if (!isBeachListVisible.value) return 100
+    return undefined
+  })
+  const mapDrawerState = computed<DrawerState>(() => {
+    if (isSplitHomeLayout.value) return 'full'
+    if (!isBeachListVisible.value) return 'peek'
+    return drawerState.value
+  })
   const shouldMountDrawer = computed(() => shouldMountBeachListDrawer(isBeachListMounted.value))
   const selectedWeather = computed(() => selectedBeachId.value === null ? undefined : getBeachWeather(selectedBeachId.value))
   const selectedBeach = computed(() => selectedBeachId.value === null
@@ -364,7 +393,7 @@
 
   const {
     toggleBeachList,
-    handleDrawerStateChange
+    handleDrawerStateChange: originalHandleDrawerStateChange
   } = createBeachListStateController({
     isBeachListMounted,
     isBeachListVisible,
@@ -374,6 +403,10 @@
     isClient: import.meta.client,
     setTimeout: import.meta.client ? window.setTimeout.bind(window) : undefined
   })
+
+  function handleDrawerStateChange(state: any) {
+    originalHandleDrawerStateChange(state)
+  }
 
   function selectBeach(beach: Beach) {
     selectedBeachId.value = beach.id
