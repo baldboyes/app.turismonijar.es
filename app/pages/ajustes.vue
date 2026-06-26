@@ -51,7 +51,7 @@
           </div>
 
 
-          <AppVersion class="justify-between w-full opacity-60" />
+          <AppVersion class="justify-center w-full opacity-70" />
 
         </div>
 

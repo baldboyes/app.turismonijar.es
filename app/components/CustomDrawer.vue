@@ -48,11 +48,10 @@
             <span class="block text-[11px] leading-tight">{{ formattedDate }}</span>
           </span>
           <span
-            v-if="lastModified && lastModified.length >= 12"
-            class="ml-auto shrink-0 text-[9px] font-extrabold uppercase tracking-wider"
-            :class="isProvisional ? 'text-amber-700' : 'text-emerald-700'"
+            v-if="lastModified && lastModified.length >= 12 && isProvisional"
+            class="ml-auto shrink-0 text-[9px] font-extrabold uppercase tracking-wider text-amber-700"
           >
-            {{ isProvisional ? $t('provisional') : $t('definitivo') }}
+            {{ $t('provisional') }}
           </span>
         </div>
       </div>

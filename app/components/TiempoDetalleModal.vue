@@ -44,7 +44,7 @@
               <MapPin v-else class="mt-0.5 size-4 shrink-0 text-[#232323]" />
               <span class="flex min-w-0 flex-col gap-0.5">
                 <span class="flex min-w-0 items-center gap-1.5 text-sm font-extrabold uppercase tracking-wide">
-                  <span class="truncate">{{ title }}</span>
+                  <span>{{ title }}</span>
                   <ChevronDown class="size-4 shrink-0 transition-transform" :class="{ 'rotate-180': isBeachSelectorOpen }" />
                 </span>
                 <span class="text-[9px] font-mono uppercase leading-none tracking-widest text-[#232323]/70">
@@ -71,7 +71,7 @@
                   v-for="beach in beaches"
                   :key="beach.id"
                   type="button"
-                  class="flex min-h-10 w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-bold"
+                  class="flex min-h-10 w-full items-center justify-between gap-3 text-left"
                   @click="selectBeach(beach.id)"
                 >
                   <span class="flex min-w-0 items-center gap-3">
@@ -79,7 +79,7 @@
                       <BeachStatusFlagIcon :status="beach.state" class="size-4 drop-shadow-sm" />
                       <span v-if="isParkingFull(beach)" class="weather-selector-parking-alert" />
                     </span>
-                    <span class="truncate">{{ beach.title }}</span>
+                    <span class="text-sm/5 font-bold">{{ beach.title }}</span>
                   </span>
                 </button>
               </div>
@@ -416,7 +416,7 @@ const contentContainerClass = computed(() => [
   'relative z-10 flex min-h-full flex-col gap-6 pb-8 content-container',
   props.layout === 'split-map'
     ? 'split-weather-content max-w-none items-center px-6 pt-safe lg:px-10'
-    : 'w-full max-w-lg mx-auto px-4 pt-[calc(var(--safe-area-inset-top,0px)+2.75rem)]'
+    : 'w-full max-w-lg mx-auto px-4 pt-[calc(var(--safe-area-inset-top,0px))]'
 ])
 
 const contentContainerStyle = computed(() => props.layout === 'split-map'

@@ -9,6 +9,6 @@ describe('AppVersion', () => {
     const source = readFileSync(componentPath, 'utf8')
 
     expect(source).toContain('settings_panel.version')
-    expect(source).toContain('0.65')
+    expect(source).toContain('0.66')
   })
 })

@@ -56,6 +56,6 @@ describe('ajustes page', () => {
     expect(html).toContain('turismo@nijar.es')
     expect(html).toContain('+34950612165')
     expect(html).toContain('Version')
-    expect(html).toContain('0.65')
+    expect(html).toContain('0.66')
   })
 })
