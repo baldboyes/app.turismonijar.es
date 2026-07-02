@@ -56,9 +56,9 @@ describe('ajustes page', () => {
     expect(html).toContain('turismo@nijar.es')
     expect(html).toContain('+34950612165')
     expect(html).toContain('Version')
-    expect(html).toContain('0.67')
+    expect(html).toContain('0.68')
 
-    const versionIndex = html.indexOf('0.67')
+    const versionIndex = html.indexOf('0.68')
     const firstLogoIndex = html.indexOf('src="/logos/01.webp"')
 
     expect(firstLogoIndex).toBeGreaterThan(versionIndex)
