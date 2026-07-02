@@ -34,4 +34,15 @@ describe('BeachStatusFlagIcon', () => {
     expect(html).toContain('text-primary')
     expect(html).not.toContain('var(--color-status-')
   })
+
+  it('renders the jellyfish asset for jellyfish warning status', async () => {
+    const html = await renderIcon({ status: 'amarilla_por_medusa', class: 'size-6' })
+
+    expect(html).toContain('src="/banderas/estados/jellyfish.svg"')
+    expect(html).toContain('alt')
+    expect(html).toContain('aria-hidden="true"')
+    expect(html).toContain('object-contain')
+    expect(html).toContain('size-6')
+    expect(html).not.toContain(FLAG_PATH)
+  })
 })
