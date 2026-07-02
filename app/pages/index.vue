@@ -204,6 +204,7 @@
     type DrawerTargetState,
     type DrawerState
   } from './index.mobile-beach-list';
+  import { startHomeBeachPollingAfterInitialFetch } from './index.polling';
   import { useLocalePath, useSeoMeta, useI18n, useState } from '#imports';
   import { useBeaches } from '~/composables/useBeaches';
   import { useBeachWeather } from '~/composables/useBeachWeather';
@@ -224,6 +225,7 @@
   const dismissedNotificationMessage = useState<string | null>('dismissedFlagNotificationMessage', () => null)
   const viewportWidth = ref(0)
   const viewportHeight = ref(0)
+  let beachPollingInterval: ReturnType<typeof window.setInterval> | undefined
   
   const mapRef = ref<any>(null)
   const drawerRef = ref<any>(null)
@@ -428,13 +430,24 @@
     isMounted.value = true
     updateViewportSize()
     window.addEventListener('resize', updateViewportSize)
-    await fetchBeaches()
+    const interval = await startHomeBeachPollingAfterInitialFetch({
+      fetchBeaches,
+      isMounted: () => isMounted.value,
+      setInterval: window.setInterval.bind(window)
+    })
+    beachPollingInterval = interval as ReturnType<typeof window.setInterval> | undefined
+    if (!isMounted.value) return
     await fetchBeachWeather()
   })
 
   onUnmounted(() => {
+    isMounted.value = false
     if (import.meta.client) {
       window.removeEventListener('resize', updateViewportSize)
+      if (beachPollingInterval) {
+        window.clearInterval(beachPollingInterval)
+        beachPollingInterval = undefined
+      }
     }
   })
 

@@ -34,8 +34,10 @@
           </div>
 
 
+          <AppVersion class="justify-center w-full opacity-70" />
+
           <!-- Logos -->
-          <div class="flex flex-wrap lg:flex-nowrap gap-4 lg:gap-8 pt-8 lg:pt-12 items-center justify-center text-xs">
+          <div class="flex flex-wrap gap-8 pt-8 lg:pt-12 items-center justify-center text-xs" aria-hidden="true">
             <div>
               <img src="/logos/01.webp" alt="" class="h-10 lg:h-12 w-auto object-contain" />
             </div>
@@ -49,9 +51,6 @@
               <img src="/logos/04.webp" alt="" class="h-10 lg:h-12 w-auto object-contain" />
             </div>
           </div>
-
-
-          <AppVersion class="justify-center w-full opacity-70" />
 
         </div>
 

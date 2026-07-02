@@ -56,6 +56,15 @@ describe('ajustes page', () => {
     expect(html).toContain('turismo@nijar.es')
     expect(html).toContain('+34950612165')
     expect(html).toContain('Version')
-    expect(html).toContain('0.66')
+    expect(html).toContain('0.67')
+
+    const versionIndex = html.indexOf('0.67')
+    const firstLogoIndex = html.indexOf('src="/logos/01.webp"')
+
+    expect(firstLogoIndex).toBeGreaterThan(versionIndex)
+    expect(html).toContain('src="/logos/01.webp"')
+    expect(html).toContain('src="/logos/02.webp"')
+    expect(html).toContain('src="/logos/03.webp"')
+    expect(html).toContain('src="/logos/04.webp"')
   })
 })

@@ -97,6 +97,37 @@ describe('useBeaches', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('silently force refreshes beaches and notification state without toggling the loading overlay', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(createFlagsResponse(JSON.stringify({
+        states: [{ id: 'ply_test', title: 'Flag Test Beach', state: 'verde' }],
+        notificacion: [{ message: 'Mensaje inicial', visualizacion: 'mostrar' }]
+      })))
+      .mockResolvedValueOnce(createBeachesResponse({ states: [detailedBeach] }))
+      .mockResolvedValueOnce(createFlagsResponse(JSON.stringify({
+        states: [{ id: 'ply_test', title: 'Flag Test Beach', state: 'amarilla' }],
+        notificacion: [{ message: 'Mensaje actualizado', visualizacion: 'mostrar' }]
+      })))
+      .mockResolvedValueOnce(createBeachesResponse({ states: [detailedBeach] }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { useBeaches } = await loadUseBeaches()
+    const beachesState = useBeaches()
+
+    await beachesState.fetchBeaches()
+    expect(beachesState.visibleNotificationMessage.value).toBe('Mensaje inicial')
+
+    const refreshPromise = beachesState.fetchBeaches({ force: true, silent: true })
+
+    expect(beachesState.isLoading.value).toBe(false)
+
+    await refreshPromise
+
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(beachesState.beaches.value[0]?.state).toBe('amarilla')
+    expect(beachesState.visibleNotificationMessage.value).toBe('Mensaje actualizado')
+  })
+
   it('sets the error state when either API response fails', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const fetchMock = vi.fn()

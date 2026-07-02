@@ -13,12 +13,27 @@ const isError = ref<boolean>(false)
 const flagNotifications = ref<FlagNotification[]>([])
 const visibleNotificationMessage = computed(() => getVisibleFlagNotificationMessage(flagNotifications.value))
 
+interface FetchBeachesOptions {
+  force?: boolean
+  silent?: boolean
+}
+
+function normalizeFetchBeachesOptions(forceOrOptions: boolean | FetchBeachesOptions = false) {
+  return typeof forceOrOptions === 'boolean'
+    ? { force: forceOrOptions, silent: false }
+    : { force: false, silent: false, ...forceOrOptions }
+}
+
 export function useBeaches() {
-  async function fetchBeaches(force = false) {
+  async function fetchBeaches(forceOrOptions: boolean | FetchBeachesOptions = false) {
+    const { force, silent } = normalizeFetchBeachesOptions(forceOrOptions)
+
     // Avoid double fetching unless forced
     if (beaches.value.length > 0 && !force) return
 
-    isLoading.value = true
+    if (!silent) {
+      isLoading.value = true
+    }
     isError.value = false
     try {
       const [flagsRes, playasRes] = await Promise.all([
@@ -72,7 +87,9 @@ export function useBeaches() {
       console.error('Error fetching beach flags data:', error)
       isError.value = true
     } finally {
-      isLoading.value = false
+      if (!silent) {
+        isLoading.value = false
+      }
     }
   }
 
